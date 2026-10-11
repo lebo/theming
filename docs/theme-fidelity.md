@@ -14,7 +14,7 @@ All **1,930 exposed CSS token values** across the six presets and both modes wer
 - Radius and border scales, multi-layer and inset shadows, raised/recessed gradients.
 - Emphasis surfaces, icon metadata, motion durations, easing and spring descriptors.
 
-`src/reference-tokens.js` preserves those observed values. Independent SHA-256 golden tests verify all twelve baseline tables and the five captured free-font variants. A separate live-browser pass selected every preset in both modes and compared the applied CSS variables against the original capture: **1,930 comparisons, zero mismatches**. No horizontal preview overflow was observed at the tested desktop size.
+`src/reference-tokens.js` preserves those observed values. Independent SHA-256 golden tests verify all twelve baseline tables and the five captured free-font variants. A separate live-browser pass selected every preset in both modes and compared the applied CSS variables against the original capture: **1,930 comparisons, zero mismatches**. No horizontal preview overflow was observed across all presets at the tested desktop size or for the checked Canvas/Paper examples at 390px. The final browser run had no warning/error logs. The font-inclusive Canvas ZIP completed successfully; Geist/Geist Mono, Open Runde, LT Superior Serif/Inter and Inter free modes loaded their exact files. Felt correctly reported missing Timeless instead of claiming a match. All 23 automated tests pass.
 
 ## Exact font mapping
 
