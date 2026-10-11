@@ -1,10 +1,10 @@
 import { FONT_ASSETS, LICENSED_FONT_FACES } from './font-manifest.js';
-import { themeTypography } from './theme.js';
+import { themeTypography, fontFamilyNames } from './theme.js';
 
 const installed = new Map();
 const checks = new Map();
-const familyName = stack => stack.split(',')[0].trim().replace(/^"|"$/g, '');
 const allFaces = [...FONT_ASSETS, ...LICENSED_FONT_FACES];
+const knownFamilies = new Set(allFaces.map(face => face.family));
 const basename = path => path.split('/').pop().toLowerCase();
 
 function fontDatabase() {
@@ -61,22 +61,43 @@ export async function addLocalFonts(files) {
 export async function inspectThemeFonts(theme) {
   const typography = themeTypography(theme);
   const requests = [...new Map(Object.values(typography.roles).flatMap(role =>
-    [role.regular, role.medium, role.heavy].map(weight => [`${familyName(role.family)}:${weight}`, { family: familyName(role.family), weight }])
+    [role.regular, role.medium, role.heavy].map(weight => [`${role.family}:${weight}`, { families: fontFamilyNames(role.family), weight }])
   )).values()];
-  const result = await Promise.all(requests.map(async ({ family, weight }) => {
-    if (!allFaces.some(face => face.family === family)) return null;
+  const loadFamily = (family, weight) => {
     const key = `${family}:${weight}`;
     if (!checks.has(key)) checks.set(key, document.fonts.load(`${weight} 16px ${JSON.stringify(family)}`).then(faces => faces.length > 0 && faces.every(face => face.status === 'loaded')).catch(() => false));
-    return await checks.get(key) ? null : `${family} (${weight})`;
+    return checks.get(key);
+  };
+  const result = await Promise.all(requests.map(async ({ families, weight }) => {
+    const preferred = families[0];
+    const candidates = families.filter(family => knownFamilies.has(family));
+    // Load the bundled alternatives too, so a missing local face never delays the intended fallback.
+    const availability = await Promise.all(candidates.map(family => loadFamily(family, weight)));
+    const active = candidates.find((family, index) => availability[index]);
+    return { preferred, weight, active, exact: knownFamilies.has(preferred) && active === preferred };
   }));
-  return { label: typography.label.replace(/^Sidebar /, ''), exact: requests.every(({family})=>allFaces.some(face=>face.family===family)), missing: [...new Set(result.filter(Boolean))] };
+  return {
+    label: typography.label.replace(/^Sidebar /, ''),
+    exact: result.every(item => item.exact),
+    missing: [...new Set(result.filter(item => knownFamilies.has(item.preferred) && !item.exact).map(item => `${item.preferred} (${item.weight})`))],
+    fallbacks: [...new Set(result.filter(item => item.active && item.active !== item.preferred).map(item => item.active))],
+    activeFamilies: [...new Set(result.map(item => item.active).filter(Boolean))],
+  };
+}
+
+/** Include every known family in the effective stack, so exported fallbacks match the editor. */
+export function fontAssetPlan(theme) {
+  const families = [...new Set(Object.values(themeTypography(theme).roles).flatMap(role => fontFamilyNames(role.family)).filter(family => knownFamilies.has(family)))];
+  const faces = FONT_ASSETS.filter(face => families.includes(face.family));
+  return { families, faces, licenses: [...new Set(faces.map(face => face.licensePath))] };
 }
 
 /** Package only fonts used by this theme. Private uploads stay in this browser until the user downloads a kit. */
 export async function collectFontFiles(theme) {
-  const families = new Set(Object.values(themeTypography(theme).roles).map(role => familyName(role.family)));
+  const plan = fontAssetPlan(theme);
+  const families = new Set(plan.families);
   const files = {};
-  await Promise.all(FONT_ASSETS.filter(face => families.has(face.family)).map(async face => {
+  await Promise.all(plan.faces.map(async face => {
     const response = await fetch(`/${face.path}`);
     if (!response.ok) throw new Error(`Could not package ${face.family}. Try again once the font has loaded.`);
     const bytes = new Uint8Array(await response.arrayBuffer());
@@ -84,8 +105,7 @@ export async function collectFontFiles(theme) {
     if (digest !== face.sha256) throw new Error(`Font integrity check failed for ${face.family}.`);
     files[face.path] = bytes;
   }));
-  const licenses = [...new Set(FONT_ASSETS.filter(face => families.has(face.family)).map(face => face.licensePath))];
-  await Promise.all(licenses.map(async path => {
+  await Promise.all(plan.licenses.map(async path => {
     const response = await fetch(`/${path}`);
     if (!response.ok) throw new Error('Could not package the font license.');
     files[path] = await response.text();

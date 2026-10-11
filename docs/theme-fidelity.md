@@ -1,63 +1,64 @@
-# Theme and typography fidelity
+# Theme and overview fidelity
 
-Captured from the public Graphical UI preview on 2026-10-11. This corrects the first implementation's approximated presets and system font stacks.
+The public Graphical UI preview was inspected on 2026-10-11 using rendered DOM, computed styles, token tables and desktop captures at 1280px and 1440px. This reconstruction uses independently implemented native controls and SVG icons.
 
-## Verified token coverage
+## Overview compositions
 
-The public Style control cycles through **Felt, Canvas, Jelly, Paper, Alloy, Base**. Their internal reference IDs are atlas, grove, lustre, charter, forma, base. The earlier Outline, Cream and Frosted presets were approximations and are replaced.
+Each preset now selects its own reference composition. The earlier single generic gallery has been removed.
 
-All **1,930 exposed CSS token values** across the six presets and both modes were extracted from the rendered `#catalog-panel-theme` style declaration. The data includes:
+| Theme | Cards | Reference subject matter |
+| --- | ---: | --- |
+| Felt | 13 | Balance, payment amounts, palette, icons, rewards, typography, workspace, company form, tabs, model settings, filters, activity and reply |
+| Base | 13 | Same composition as Felt, with Base control sizing and surfaces |
+| Canvas | 8 | Production pipeline, latency, palette, secrets, evaluations, typography, model settings and build log |
+| Jelly | 7 | Community invitation, palette, poll, typography, welcome, conversation and event |
+| Paper | 6 | Quarterly brief, palette, workspace review, typography, readiness and appointment |
+| Alloy | 6 | Discount campaign, palette, shopping bag, order, typography and delivery |
 
-- Four palette colors, ten neutrals, alpha variants, status colors and semantic colors.
-- UI, brand, editorial and data font stacks and their regular/medium/heavy weights.
-- Seven type/line/tracking tiers, five tracking tokens and eight spacing tiers.
-- Radius and border scales, multi-layer and inset shadows, raised/recessed gradients.
-- Emphasis surfaces, icon metadata, motion durations, easing and spring descriptors.
+The measured 1280px reference has an overview at `(16,16)`, two 428px columns separated by 16px, and a 352px inspector at `x=912`. Palette cards are 428×214px, typography cards are 428×267.5px, and the Felt/Base icon card is 428×428px. Column assignment and card order are explicit. Typography uses proportional glyph, family and weight specimens; the palette includes four brand colors and ten neutrals. These are layout targets, not a claim that every rendered pixel matches.
 
-`src/reference-tokens.js` preserves those observed values. Independent SHA-256 golden tests verify all twelve baseline tables and the five captured free-font variants. A separate live-browser pass selected every preset in both modes and compared the applied CSS variables against the original capture: **1,930 comparisons, zero mismatches**. No horizontal preview overflow was observed across all presets at the tested desktop size or for the checked Canvas/Paper examples at 390px. The final browser run had no warning/error logs. The font-inclusive Canvas ZIP completed successfully; Geist/Geist Mono, Open Runde, LT Superior Serif/Inter and Inter free modes loaded their exact files. Felt correctly reported missing Timeless instead of claiming a match. All 23 automated tests pass.
+`tests/overview.test.js` exercises the public preview renderer: six compositions, card counts/order, distinct reference content, complete palette/type specimens and the separate component browser. These contracts catch a return to the shared generic gallery; screenshots are still needed to assess visual fidelity.
 
-## Exact font mapping
+## Captured tokens
 
-| Theme | Reference typography | Free typography |
+All **1,930 exposed CSS token values** across six presets and both modes are preserved in `src/reference-tokens.js`. They cover colors and alpha variants, four font roles and three weights, type/line/tracking scales, spacing, corners, borders, layered shadows, surface gradients, emphasis, icons and motion. Independent SHA-256 golden tests verify all twelve baseline tables and the five observed free-font alternatives.
+
+Token equality does not guarantee equal layout or typography. Effective `--t-font-*` aliases add the fallback chains below while the raw `--font-*` values remain unchanged.
+
+## Font behavior
+
+| Theme | Preferred reference faces | Effective fallback when unavailable |
 | --- | --- | --- |
-| Felt | GT Standard L in all roles | Timeless Grotesk |
-| Canvas | GT Standard M; Geist Mono for data | Geist; Geist Mono for data |
-| Jelly | GT Maru; Open Runde for data | Open Runde |
-| Paper | Inter UI/data; GT Super Text brand/editorial | Inter UI/data; LT Superior Serif brand/editorial |
-| Alloy | GT America | Inter |
-| Base | Inter | Inter |
+| Felt | GT Standard L | Timeless Grotesk, then bundled Inter |
+| Canvas | GT Standard M; Geist Mono for data | Bundled Geist; Geist Mono for data |
+| Jelly | GT Maru; Open Runde for data | Bundled Open Runde |
+| Paper | Inter UI/data; GT Super Text brand/editorial | Bundled Inter and LT Superior Serif |
+| Alloy | GT America | Bundled Inter |
+| Base | Inter | Bundled Inter |
 
-The reference's CSS names `Sidebar Inter`, `Sidebar Geist` and `Sidebar Geist Mono` are retained as aliases. Their actual font families are Inter Variable, Geist and Geist Mono.
+`Sidebar Inter`, `Sidebar Geist` and `Sidebar Geist Mono` retain the reference CSS aliases. The actual bundled versions are **Inter 4.001, Geist 1.800, Geist Mono 1.401, Open Runde 1.001 and LT Superior Serif 2.120**. Twelve OFL files are SHA-256 pinned; builds reject changed downloads. Their license notices are in `fonts/licenses/`.
 
-The OFL files are the observed versions, not latest-package substitutions: **Inter 4.001, Geist 1.800, Geist Mono 1.401, Open Runde 1.001, LT Superior Serif 2.120**. Twelve files are SHA-256 pinned in `src/font-manifest.js`; production builds fail if the downloaded bytes differ. Original license notices are under `fonts/licenses/`.
+The inspector reports unavailable preferred faces and the loaded fallback family. It loads all required role weights. Selecting **Free** uses the observed alternatives; Felt requests Timeless and falls back to Inter until Timeless is supplied. No fallback is presented as an exact font match.
 
-## Font availability
+Use **Typography → Add font files** with authorized files and the original filenames from `src/font-manifest.js` or an exported `FONT_SETUP.md`. These files load locally, persist in browser IndexedDB and enter explicitly downloaded kits. They are not uploaded or included in share URLs. Private deployments can use ignored `fonts/licensed/...` paths or `THEMING_LICENSED_FONT_BASE_URL`. GT and Timeless files are not distributed by this repository.
 
-The exact GT and Timeless faces are registered with local font sources. They are not supplied automatically: GT families are commercial, and the Timeless license prohibits public-repository distribution. A family name alone does not make the correct font render. The inspector reports missing faces and weights explicitly.
+## Exports and saved themes
 
-Use **Typography → Add font files** with your authorized webfont files, retaining the original filenames listed in `src/font-manifest.js` or an exported `FONT_SETUP.md`. The files load with the reference weight/style/stretch/features, stay in this browser's IndexedDB, and are included when you explicitly download a theme kit. They are not uploaded or put into share links.
+CSS exports include deployed OFL font URLs. ZIP exports use relative paths and include every bundled family in the effective role stacks, all its weights and licenses, plus matching fonts added in this browser. Typed typography roles use the same effective stacks as the preview. Raw reference tokens remain available unchanged in both forms.
 
-For a private deployment, place authorized files at the ignored `fonts/licensed/...` paths or configure `THEMING_LICENSED_FONT_BASE_URL` to a root containing those paths. Timeless's website-embedding exception does not permit committing the font to this public repo.
+Existing version-one themes retain their settings. **Apply updated preset** first saves a named backup. Legacy IDs map Outline→Base, Cream→Paper and Frosted→Alloy without silently replacing saved controls.
 
-Selecting **Free** loads the observed alternatives for Canvas, Jelly, Paper, Alloy and Base. Felt still needs the freely obtainable Timeless file supplied by you. Without the required font, its fallback appearance is explicitly **not** an exact typography match.
+## Verification limits
 
-## Exports and existing themes
+The automated suite covers tokens, overview composition, fallback loading/bundling, theme roundtrips and binary ZIP integrity. The current overview and editor shell need visual comparison at each tested viewport; prior checks of the replaced gallery do not validate these layouts. Font metrics differ when a preferred face is unavailable. SVG icon drawings, native control internals, animations and non-default character/color interpolation remain independent implementations. The result is not described as pixel-perfect.
 
-Individual CSS exports include font-face declarations with deployed OFL asset URLs. ZIP exports include the selected OFL fonts, licenses and matching fonts added in this browser, use relative asset paths, and include font setup instructions. Both export forms carry the same raw token table, role metadata and semantic aliases as the editor.
+## Evidence
 
-Existing version-one themes retain their settings. The inspector offers **Apply updated preset**, saves a named backup first, and applies the corrected baseline. Legacy IDs map Outline→Base, Cream→Paper and Frosted→Alloy without silently replacing saved controls.
+- [Public preview](https://www.graphicalui.com/marketing/preview?mode=light)
+- [Inter OFL](https://github.com/rsms/inter/blob/master/LICENSE.txt)
+- [Geist OFL](https://github.com/vercel/geist-font/blob/main/OFL.txt)
+- [Open Runde OFL](https://github.com/lauridskern/open-runde/blob/main/LICENSE.txt)
+- [LT Superior Serif designer](https://lyonstype.neocities.org/fonts)
+- [Timeless terms](https://timeless.co/type/license)
 
-## Remaining visual differences
-
-Token equality is not pixel equality. The gallery retains original specimen content/layouts, SVG icons and native controls. Graphical UI uses different per-theme example layouts, commercial icons and component internals. Those structural differences remain outside this token/font correction. Non-default character/color interpolation is our own implementation, not a claim of recovered proprietary algorithms.
-
-## Primary evidence
-
-- Public preview: https://www.graphicalui.com/marketing/preview?mode=light
-- Inter OFL: https://github.com/rsms/inter/blob/master/LICENSE.txt
-- Geist OFL: https://github.com/vercel/geist-font/blob/main/OFL.txt
-- Open Runde OFL: https://github.com/lauridskern/open-runde/blob/main/LICENSE.txt
-- LT Superior Serif designer and OFL statement: https://lyonstype.neocities.org/fonts
-- Timeless terms, version 1.2: https://timeless.co/type/license
-
-REA's earlier shipped-bundle analysis is documented in [rea-analysis.md](rea-analysis.md). The font follow-up parsed public CSS declarations and serialized defaults without executing the source bundle; FontTools verified the actual free font versions, hashes and license metadata. No private account API or save-defaults endpoint was called.
+The REA bundle analysis is documented in [rea-analysis.md](rea-analysis.md). Follow-up inspection used public rendered styles and font metadata. No private account or save-defaults endpoint was accessed.

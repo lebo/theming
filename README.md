@@ -14,7 +14,7 @@ npm run dev
 Open http://127.0.0.1:4173. `PORT=8080 npm run dev` changes the port.
 
 ```sh
-npm test       # theme validation, palette behavior, contrast, export and ZIP integrity
+npm test       # theme validation, overview compositions, fonts, exports and ZIP integrity
 npm run check  # JavaScript syntax checks
 npm run build  # produces deployable dist/
 ```
@@ -31,7 +31,7 @@ Run `npm run fonts` before local development or building so the exact OFL fonts 
 - Spacing scale, corner radius, border width, shadow depth, icon treatment and stroke width.
 - Motion easing and duration with reduced-motion preference support.
 - Direct state styling for buttons, inputs, selects, text areas and switches: default, hover, pressed, focus and disabled, with CSS export.
-- Interactive preview gallery and 24 searchable native component specimens.
+- Theme-specific interactive overviews: Felt/Base finance and workspace cards, Canvas technical tools, Jelly community cards, Paper editorial cards and Alloy commerce cards. A separate tab has 24 searchable native component specimens.
 - Undo/redo, browser-local autosave, named theme collection, JSON import and self-contained share URLs.
 - Export a complete ZIP containing CSS, configuration JSON, typed DTCG design tokens, original React primitives, a React provider, setup instructions and an agent guide.
 
@@ -47,12 +47,16 @@ The editor works without an account or backend. Theme editing works offline once
 | `src/theme.js` | Validated versioned theme model, presets, color/contrast utilities, semantic CSS variables |
 | `src/app.js` | Editor, history, local persistence, share/import/export flows |
 | `src/preview.js` | Interactive native HTML component gallery |
+| `src/overview.js`, `src/overview.css` | Felt and Base overview compositions |
+| `src/overview-special.js`, `src/overview-special.css` | Canvas, Jelly, Paper and Alloy overview compositions |
 | `src/export.js` | CSS/JSON/React/guide exports and dependency-free ZIP encoder |
 | `src/icons.js` | Original SVG icon set |
 | `src/app.css` | Editor shell and responsive inspector |
 | `src/preview.css` | Token-driven specimen styling |
 
-The editor itself uses browser ES modules and native controls. Generated React files are independent exports; React is not an editor dependency. OFL fonts are fetched at build time in their measured versions, with license texts under `fonts/licenses`. GT fonts and Timeless are not committed or downloaded automatically. The inspector reports missing faces explicitly. Use **Add font files** with authorized files using the original filenames; these stay in browser IndexedDB and are included only when you download a kit. They are not sent to a backend or included in share links. Alternatively, place authorized webfonts under the ignored `fonts/licensed/` paths before a private deployment, or set `THEMING_LICENSED_FONT_BASE_URL` to a root that contains those paths. Font lists and setup instructions are included in every export.
+The editor itself uses browser ES modules and native controls. Generated React files are independent exports; React is not an editor dependency. OFL fonts are fetched at build time in their measured versions, with license texts under `fonts/licenses`. Missing GT or Timeless faces fall back to the closest bundled family: Inter, Geist, Open Runde or LT Superior Serif. The inspector identifies unavailable preferred faces; fallback rendering is not an exact typography match.
+
+Use **Add font files** with authorized files using the original filenames; these stay in browser IndexedDB and are included only when you download a kit. They are not sent to a backend or included in share links. Alternatively, place authorized webfonts under the ignored `fonts/licensed/` paths before a private deployment, or set `THEMING_LICENSED_FONT_BASE_URL` to a root that contains those paths. ZIP exports include all bundled fallback families used by the theme, their weights and licenses, plus matching files added in this browser.
 
 ## Scope
 

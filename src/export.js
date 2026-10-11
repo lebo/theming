@@ -1,4 +1,4 @@
-import { normalizeTheme, themeVariables, themeTypography, parseCSSColor, toCSS } from './theme.js';
+import { normalizeTheme, themeVariables, themeTypography, fontFamilyNames, parseCSSColor, toCSS } from './theme.js';
 import { generateFontCSS } from './font-css.js';
 import { FONT_ASSETS, LICENSED_FONT_FACES } from './font-manifest.js';
 
@@ -48,10 +48,10 @@ function designTokens(theme) {
     }
   }
   const vars = themeVariables(theme);
-  const fontFamily = value => value.split(',').map(font => font.trim().replace(/^"|"$/g, ''));
+  const fontFamily = fontFamilyNames;
   const roles = {};
   for (const role of ['ui', 'brand', 'editorial', 'data']) roles[role] = {
-    family: token('fontFamily', fontFamily(vars[`--font-${role}`])),
+    family: token('fontFamily', fontFamily(vars[`--t-font-${role}`])),
     regular: token('fontWeight', Number(vars[`--weight-${role}-regular`])),
     medium: token('fontWeight', Number(vars[`--weight-${role}-medium`])),
     heavy: token('fontWeight', Number(vars[`--weight-${role}-heavy`])),
@@ -204,7 +204,7 @@ Design tokens specification: https://www.designtokens.org/TR/2025.10/format/
 }
 
 function fontSetup(typography) {
-  const families=new Set(Object.values(typography.roles).map(role=>role.family.split(',')[0].trim().replace(/^"|"$/g,'')));
+  const families=new Set(Object.values(typography.roles).flatMap(role=>fontFamilyNames(role.family)));
   const faces=[...FONT_ASSETS,...LICENSED_FONT_FACES].filter(face=>families.has(face.family));
   return `# Font setup
 

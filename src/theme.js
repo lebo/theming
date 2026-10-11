@@ -194,13 +194,40 @@ const ROLES = ['ui', 'brand', 'editorial', 'data'];
 const SCALES = ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl'];
 const pxScale = (value, factor) => `${round(parseFloat(value) * factor)}px`;
 const fontLabel = family => family.split(',')[0].trim().replace(/^"|"$/g, '');
+const FONT_FALLBACKS = {
+  'GT Standard L': ['Timeless Grotesk', 'Sidebar Inter'],
+  'Timeless Grotesk': ['Sidebar Inter'],
+  'GT Standard M': ['Sidebar Geist'],
+  'GT Maru': ['Open Runde'],
+  'GT Super Text': ['LT Superior Serif'],
+  'GT America': ['Sidebar Inter'],
+};
+
+/** Known reference stacks contain ordinary family names, with no embedded commas. */
+export const fontFamilyNames = stack => stack.split(',').map(value => value.trim().replace(/^["']|["']$/g, ''));
+
+/** Keep the authored first choice while putting a bundled companion before system fallbacks. */
+function usableFontStack(stack) {
+  const result = [], seen = new Set();
+  const add = (name, declaration) => {
+    if (seen.has(name)) return;
+    seen.add(name);
+    result.push(declaration);
+  };
+  for (const declaration of stack.split(',').map(value => value.trim())) {
+    const name = fontFamilyNames(declaration)[0];
+    add(name, declaration);
+    for (const fallback of FONT_FALLBACKS[name] || []) add(fallback, JSON.stringify(fallback));
+  }
+  return result.join(', ');
+}
 
 /** Roles are kept separate: Paper's editorial serif and Canvas's data mono are intentional. */
 export function themeTypography(input) {
   const theme = normalizeTheme(input);
   const tokens = themeVariables(theme);
   const roles = Object.fromEntries(ROLES.map(role => [role, {
-    family: tokens[`--font-${role}`],
+    family: tokens[`--t-font-${role}`],
     regular: Number(tokens[`--weight-${role}-regular`]),
     medium: Number(tokens[`--weight-${role}-medium`]),
     heavy: Number(tokens[`--weight-${role}-heavy`]),
@@ -352,7 +379,7 @@ export function themeVariables(input, mode) {
     '--t-brand': brand, '--t-on-brand': tokens['--cte-accent-text'], '--t-primary': primary, '--t-on-primary': onPrimary,
     '--t-radius': `${round((id === 'canvas' ? 9 : 24) * radiusRatio)}px`, '--t-radius-sm': tokens['--radius-s'],
     '--t-border-width': tokens['--border-m'], '--t-shadow': tokens['--shadow-s'],
-    '--t-font': tokens['--font-ui'], '--t-font-size': tokens['--size-m'], '--t-line-height': `${round(parseFloat(tokens['--line-m']) / bodySize)}`,
+    '--t-font': usableFontStack(tokens['--font-ui']), '--t-font-size': tokens['--size-m'], '--t-line-height': `${round(parseFloat(tokens['--line-m']) / bodySize)}`,
     '--t-letter-spacing': tokens['--letter-spacing-m'], '--t-space': tokens['--space-m'], '--t-duration': tokens['--motion-duration'],
     '--t-easing': tokens['--motion-easing'], '--t-icon-stroke': tokens['--icon-stroke-width'], '--t-icon-fill': theme.iconStyle === 'solid' ? 'currentColor' : 'none',
     '--t-font-weight': tokens['--weight-ui-medium'], '--t-accent-text': accessibleAccent(colorHex(brand), colorHex(surface)),
@@ -368,7 +395,7 @@ export function themeVariables(input, mode) {
     '--t-button-gap': pxScale(button.gap, spaceRatio),
   };
   for (const role of ROLES) {
-    aliases[`--t-font-${role}`] = tokens[`--font-${role}`];
+    aliases[`--t-font-${role}`] = usableFontStack(tokens[`--font-${role}`]);
     for (const weight of ['regular', 'medium', 'heavy']) aliases[`--t-weight-${role}-${weight}`] = tokens[`--weight-${role}-${weight}`];
   }
   return { ...tokens, ...aliases };
@@ -387,7 +414,7 @@ export function toCSS(input) {
 const baseComponentCSS = `.theme-root { color: var(--t-text); background: var(--t-bg); font-family: var(--t-font); font-size: var(--t-font-size); line-height: var(--t-line-height); letter-spacing: var(--t-letter-spacing); }
 .theme-root *, .theme-root *::before, .theme-root *::after { box-sizing: border-box; }
 .t-button, .t-input, .t-select, .t-textarea { font: inherit; letter-spacing: inherit; border: var(--t-border-width) solid var(--t-border); border-radius: var(--t-radius-sm); min-height: var(--t-control-height); padding: calc(var(--t-space) * .5) calc(var(--t-space) * .8); transition: background-color var(--t-duration) var(--t-easing), border-color var(--t-duration) var(--t-easing), box-shadow var(--t-duration) var(--t-easing); }
-.t-button { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--t-space) * .45); background: var(--t-primary); color: var(--t-on-primary); border-color: transparent; border-radius: var(--radius-s); font-family: var(--font-ui); font-size: var(--size-m); font-weight: var(--weight-ui-medium); line-height: var(--line-m); letter-spacing: var(--letter-spacing-m); padding: var(--space-s) var(--space-m); gap: var(--space-xs); cursor: pointer; }
+.t-button { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--t-space) * .45); background: var(--t-primary); color: var(--t-on-primary); border-color: transparent; border-radius: var(--radius-s); font-family: var(--t-font-ui); font-size: var(--size-m); font-weight: var(--weight-ui-medium); line-height: var(--line-m); letter-spacing: var(--letter-spacing-m); padding: var(--space-s) var(--space-m); gap: var(--space-xs); cursor: pointer; }
 .t-button[data-size="showcase"] { background: var(--t-button-background); color: var(--t-button-color); border-radius: var(--t-button-radius); font-size: var(--t-button-font-size); font-weight: var(--t-button-font-weight); line-height: var(--t-button-line-height); letter-spacing: var(--t-button-letter-spacing); padding: var(--t-button-padding); gap: var(--t-button-gap); box-shadow: var(--t-button-shadow); }
 .t-button[data-variant="secondary"] { background: var(--t-surface); border-color: var(--t-border); color: var(--t-text); }
 .t-button[data-variant="ghost"] { background: transparent; color: var(--t-text); }
