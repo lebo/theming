@@ -177,3 +177,6 @@
 @media(max-width:500px){.preview .component-specimens{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.preview *{transition:none!important}}
 @container preview-area (max-width:640px){.preview .theme-specimens{columns:1}}
+.preview[data-forced-state=hover][data-forced-component=button] .p-button:not(:disabled){filter:brightness(.95);transform:translateY(-1px)}
+.preview[data-forced-state=active][data-forced-component=button] .p-button:not(:disabled){transform:scale(.98)}
+.preview[data-forced-state=focus][data-forced-component=button] .p-button:not(:disabled),.preview[data-forced-state=focus][data-forced-component=input] input.p-input,.preview[data-forced-state=focus][data-forced-component=select] select.p-input,.preview[data-forced-state=focus][data-forced-component=textarea] textarea.p-input,.preview[data-forced-state=focus][data-forced-component=switch] .p-switch{outline:2px solid var(--t-accent-text);outline-offset:3px}

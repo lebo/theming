@@ -22,8 +22,8 @@ There are no Graphical source files, paid fonts, proprietary icon packs, account
 - `npm test`: fourteen tests covering validated imports, light/dark palette overrides, derived character and icon effects, WCAG contrast calculations, typed design tokens, CSS mode export, and ZIP path/CRC/UTF-8 integrity, and validated per-component state styling with matching preview/export rules.
 - `npm run check`: all application modules pass JavaScript syntax validation.
 - `npm run build`: produces a static dist directory without external dependencies.
-- Hosted browser checks: initial rendering, preset selection, dark appearance, component filtering, dialog open/close, export code preview, console error review, 390px mobile inspector/modal behavior, manual hex editing, and share-link import with URL cleanup.
-- Fixed issues from review: share-link persistence, effective brand overrides, storage failure reporting, dialog cancellation, keyboard tabs, mobile focus containment and desktop-only inspector controls.
+- Hosted browser checks: initial rendering, preset selection, dark appearance, component filtering, dialog open/close, export code preview, console error review, 390px mobile inspector/modal behavior, manual hex editing, share-link import with URL cleanup, and a custom hover color confirmed in both the live component and exported CSS.
+- Fixed issues from review: share-link persistence, effective brand overrides, storage failure reporting, dialog cancellation, keyboard tabs, mobile focus containment and desktop-only inspector controls, component inspector exit, and forced disabled-state semantics.
 
 Local preview hosting was unavailable in the execution environment (network sandbox rejected localhost listening). Browser checks use the Vercel deployment. ZIP contents and integrity are verified directly by tests; browser download-event automation was interrupted by its browser session transport.
 
