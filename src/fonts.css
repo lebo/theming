@@ -32,15 +32,15 @@
 @font-face { font-family: "GT Maru"; src: local("GT-Maru-Medium-Oblique"), local("GT Maru Medium Oblique"); font-weight: 500; font-style: oblique; font-display: swap; }
 @font-face { font-family: "GT Maru"; src: local("GT-Maru-Bold-Oblique"), local("GT Maru Bold Oblique"); font-weight: 700; font-style: oblique; font-display: swap; }
 @font-face { font-family: "GT Maru"; src: local("GT-Maru-Black-Oblique"), local("GT Maru Black Oblique"); font-weight: 900; font-style: oblique; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Book"), local("GT Super Text Book"); font-weight: 350; font-style: normal; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Regular"), local("GT Super Text Regular"), local("GT Super Text"); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Medium"), local("GT Super Text Medium"); font-weight: 500; font-style: normal; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Bold"), local("GT Super Text Bold"); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Black"), local("GT Super Text Black"); font-weight: 900; font-style: normal; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Book-Italic"), local("GT Super Text Book Italic"); font-weight: 350; font-style: italic; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Regular-Italic"), local("GT Super Text Regular Italic"); font-weight: 400; font-style: italic; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Medium-Italic"), local("GT Super Text Medium Italic"); font-weight: 500; font-style: italic; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Bold-Italic"), local("GT Super Text Bold Italic"); font-weight: 700; font-style: italic; font-display: swap; }
-@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Black-Italic"), local("GT Super Text Black Italic"); font-weight: 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Book"), local("GT Super Text Book"); font-weight: 350; font-style: normal; font-feature-settings: "lnum"; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Regular"), local("GT Super Text Regular"), local("GT Super Text"); font-weight: 400; font-style: normal; font-feature-settings: "lnum"; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Medium"), local("GT Super Text Medium"); font-weight: 500; font-style: normal; font-feature-settings: "lnum"; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Bold"), local("GT Super Text Bold"); font-weight: 700; font-style: normal; font-feature-settings: "lnum"; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Black"), local("GT Super Text Black"); font-weight: 900; font-style: normal; font-feature-settings: "lnum"; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Book-Italic"), local("GT Super Text Book Italic"); font-weight: 350; font-style: italic; font-feature-settings: "lnum"; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Regular-Italic"), local("GT Super Text Regular Italic"); font-weight: 400; font-style: italic; font-feature-settings: "lnum"; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Medium-Italic"), local("GT Super Text Medium Italic"); font-weight: 500; font-style: italic; font-feature-settings: "lnum"; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Bold-Italic"), local("GT Super Text Bold Italic"); font-weight: 700; font-style: italic; font-feature-settings: "lnum"; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Black-Italic"), local("GT Super Text Black Italic"); font-weight: 900; font-style: italic; font-feature-settings: "lnum"; font-display: swap; }
 @font-face { font-family: "Timeless Grotesk"; src: local("TimelessSans-GroteskVF"), local("TimelessSans GroteskVF"), local("Timeless Sans Grotesk"), local("Timeless Sans Grotesk Light"); font-weight: 300 800; font-style: normal; font-display: swap; }
 @font-face { font-family: "Timeless Grotesk"; src: local("TimelessSans-GroteskItalicVF"), local("TimelessSans GroteskItalicVF"), local("Timeless Sans Grotesk Italic"), local("Timeless Sans Grotesk Light Italic"); font-weight: 300 800; font-style: italic; font-display: swap; }

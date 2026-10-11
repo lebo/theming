@@ -177,7 +177,7 @@ const PALETTES = {
 };
 const FONTS = {
   system: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  inter: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  inter: '"Sidebar Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   rounded: 'ui-rounded, "SF Pro Rounded", "Nunito", -apple-system, BlinkMacSystemFont, sans-serif',
   serif: '"Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif',
   mono: '"SFMono-Regular", Consolas, "Liberation Mono", monospace',

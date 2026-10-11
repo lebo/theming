@@ -16,7 +16,7 @@ function fontDatabase() {
   });
 }
 async function activate(record) {
-  const face = new FontFace(record.family, record.bytes, { weight: record.weight, style: record.style });
+  const face = new FontFace(record.family, record.bytes, { weight: record.weight, style: record.style, ...(record.stretch?{stretch:record.stretch}:{}), ...(record.featureSettings?{featureSettings:record.featureSettings}:{}) });
   await face.load();
   document.fonts.add(face);
   installed.set(record.path, record);
@@ -69,7 +69,7 @@ export async function inspectThemeFonts(theme) {
     if (!checks.has(key)) checks.set(key, document.fonts.load(`${weight} 16px ${JSON.stringify(family)}`).then(faces => faces.length > 0 && faces.every(face => face.status === 'loaded')).catch(() => false));
     return await checks.get(key) ? null : `${family} (${weight})`;
   }));
-  return { label: typography.label.replace(/^Sidebar /, ''), missing: [...new Set(result.filter(Boolean))] };
+  return { label: typography.label.replace(/^Sidebar /, ''), exact: requests.every(({family})=>allFaces.some(face=>face.family===family)), missing: [...new Set(result.filter(Boolean))] };
 }
 
 /** Package only fonts used by this theme. Private uploads stay in this browser until the user downloads a kit. */

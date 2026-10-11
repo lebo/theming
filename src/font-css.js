@@ -10,6 +10,6 @@ export function generateFontCSS({ assetBase = '', licensedBase = '' } = {}) {
       ...(licensedBase ? [`url(${JSON.stringify(join(licensedBase, face.path))}) format(${JSON.stringify(face.format)})`] : [])],
   });
   return '/* Exact observed faces. OFL licenses accompany the assets. GT and Timeless require your own font files. */\n' + declarations.map(face =>
-    `@font-face { font-family: ${JSON.stringify(face.family)}; src: ${face.sources.join(', ')}; font-weight: ${face.weight}; font-style: ${face.style};${face.stretch ? ` font-stretch: ${face.stretch};` : ''} font-display: swap; }`
+    `@font-face { font-family: ${JSON.stringify(face.family)}; src: ${face.sources.join(', ')}; font-weight: ${face.weight}; font-style: ${face.style};${face.stretch ? ` font-stretch: ${face.stretch};` : ''}${face.featureSettings ? ` font-feature-settings: ${face.featureSettings};` : ''} font-display: swap; }`
   ).join('\n') + '\n';
 }

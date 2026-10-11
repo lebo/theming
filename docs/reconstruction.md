@@ -15,11 +15,11 @@ Inspected on 2026-10-11 using the publicly accessible Graphical UI marketing pre
 
 Theming reproduces this interaction model with its own theme schema, color derivation, UI code, specimen data, SVG icons and generated component source. It expands the public demo with working advanced settings, browser-local persistence and an export kit.
 
-There are no Graphical source files, paid fonts, proprietary icon packs, account APIs, or authenticated-only files in this repository. Public and closed product names describe inspiration, not affiliation. The font selector uses locally available font stacks. Component exports use native HTML/React semantics rather than a Base UI dependency.
+There are no Graphical source files, paid fonts, proprietary icon packs, account APIs, or authenticated-only files in this repository. Public and closed product names describe inspiration, not affiliation. The font selector uses exact observed role stacks. OFL font versions are hash-pinned and bundled at deployment; GT and Timeless need user-provided or installed files. Component exports use native HTML/React semantics rather than a Base UI dependency.
 
 ## Verification
 
-- `npm test`: fourteen tests covering validated imports, light/dark palette overrides, derived character and icon effects, WCAG contrast calculations, typed design tokens, CSS mode export, and ZIP path/CRC/UTF-8 integrity, and validated per-component state styling with matching preview/export rules.
+- `npm test`: twenty-three tests covering validated imports, light/dark palette overrides, derived character and icon effects, WCAG contrast calculations, typed design tokens, CSS mode export, and ZIP path/CRC/UTF-8 integrity, and validated per-component state styling with matching preview/export rules.
 - `npm run check`: all application modules pass JavaScript syntax validation.
 - `npm run build`: produces a static dist directory without external dependencies.
 - Hosted browser checks: initial rendering, preset selection, dark appearance, component filtering, dialog open/close, export code preview, console error review, 390px mobile inspector/modal behavior, manual hex editing, share-link import with URL cleanup, and a custom hover color confirmed in both the live component and exported CSS.
@@ -30,3 +30,7 @@ Local preview hosting was unavailable in the execution environment (network sand
 ## REA execution
 
 The official rea-agents 6.4.0 analyzer was run successfully against three public JavaScript bundles, with no parse failures. See [the full report](rea-analysis.md) for the command, input hashes, findings and partial-coverage limits. Component state editing was added to the independent implementation after this pass; its rules are shared between preview CSS and exported CSS.
+
+## Exact preset correction
+
+The first pass used approximated presets and font stacks. A second pass captured all 1,930 exposed token values across Felt, Canvas, Jelly, Paper, Alloy and Base in light/dark mode, plus five free-typography variants. Both source-level golden tests and the deployed browser styles match the captured tables. See [theme fidelity](theme-fidelity.md) for font licensing/availability and visual limits.
