@@ -58,7 +58,7 @@ Existing version-one themes retain their settings. **Apply updated preset** firs
 
 ## Verification limits
 
-The automated suite covers tokens, exact palette data, overview composition, fallback loading/bundling, theme roundtrips and binary ZIP integrity. The current overview and editor shell need visual comparison at each tested viewport; prior checks of the replaced gallery do not validate these layouts. Font metrics differ when a preferred face is unavailable. SVG icon drawings, native control internals, animations and non-default character/color interpolation remain independent implementations. The result is not described as pixel-perfect.
+The automated suite covers tokens, exact palette data, overview composition, fallback loading/bundling, theme roundtrips and binary ZIP integrity. The rebuilt galleries were inspected in-browser at 1728 × 1000. All 13 Felt card bounds and all 6 Paper card bounds matched the reference at that size (within subpixel rounding). Jelly was compared visually against the supplied screenshots; Canvas, Alloy and Base were also opened and inspected. Palette selection, style replacement, the Canvas slider, font selection, dark mode, component search and CSS export were exercised. The browser viewport override did not apply during the mobile check, so this pass does not claim mobile visual parity. Font metrics differ when a preferred face is unavailable. SVG icon drawings, native control internals, animations and non-default character/color interpolation remain independent implementations. The result is not described as pixel-perfect.
 
 ## Evidence
 

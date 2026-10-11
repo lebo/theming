@@ -70,8 +70,8 @@
 .preview .sp-poll h2 { padding-inline:var(--space-xs); }
 .preview .sp-poll-options { display:grid; gap:var(--space-xxs); }
 .preview .sp-poll-option { display:flex; align-items:center; gap:var(--space-s); padding:var(--space-s) var(--space-xs); cursor:pointer; }
-.preview .sp-poll-option input { appearance:none; width:20px; height:20px; border:2px solid var(--neutral-5); border-radius:50%; background:var(--neutral-1); margin:0; flex:none; }
-.preview .sp-poll-option input:checked { border:6px solid var(--color-1); }
+.preview .sp-poll-option input { appearance:none; width:var(--size-m); height:var(--size-m); border:0; border-radius:50%; background:var(--neutral-3); margin:0; flex:none; }
+.preview .sp-poll-option input:checked { background:radial-gradient(circle closest-side,var(--neutral-1) 39%,var(--color-1) 40%); }
 .preview .sp-poll-option>span { flex:1; display:flex; flex-direction:column; }
 .preview .sp-poll-option strong { font-size:var(--size-m); line-height:var(--line-m); font-weight:var(--weight-ui-regular); }
 .preview .sp-poll-option small { font-size:var(--size-s); line-height:var(--line-s); color:var(--neutral-7); }

@@ -162,7 +162,10 @@
 .standard-overview .so-spark-top strong { font-weight:var(--weight-data-heavy,600); }
 .standard-overview .so-spark-top span { color:var(--neutral-7); }
 .standard-overview .so-spark svg { display:block; width:100%; height:auto; overflow:visible; }
-.standard-overview .so-spark-grid { stroke:var(--neutral-4); stroke-width:1; stroke-dasharray:3 4; }
+.standard-overview .so-spark line { stroke:var(--neutral-4); stroke-width:1; vector-effect:non-scaling-stroke; }
+.standard-overview .so-spark-grid { stroke-dasharray:3 4; }
+.standard-overview .so-spark-series { fill:none; stroke:var(--color-2,var(--color-1)); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+.standard-overview .so-spark circle { fill:var(--color-2,var(--color-1)); }
 .standard-overview .so-spark-clocks { display:flex; justify-content:space-between; color:var(--neutral-7); margin-top:var(--space-xs,8px); }
 .standard-overview .so-reply-form { display:flex; flex-direction:column; gap:var(--space-m,16px); width:100%; max-width:400px; padding:var(--space-m,16px); border-radius:var(--radius-m,12px); background:var(--neutral-3); }
 .standard-overview[data-standard-preset=base] .so-reply-form { background:var(--neutral-1); }
