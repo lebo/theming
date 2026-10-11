@@ -6,6 +6,7 @@
   "description": "A local-first visual design system editor with live components and portable theme exports.",
   "scripts": {
     "dev": "node scripts/serve.mjs",
+    "fonts": "node scripts/fetch-fonts.mjs",
     "start": "node scripts/serve.mjs",
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.js",

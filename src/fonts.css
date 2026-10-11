@@ -1,0 +1,46 @@
+/* Exact observed faces. OFL licenses accompany the assets. GT and Timeless require your own font files. */
+@font-face { font-family: "Open Runde"; src: url("/fonts/open-runde/OpenRunde-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Open Runde"; src: url("/fonts/open-runde/OpenRunde-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Open Runde"; src: url("/fonts/open-runde/OpenRunde-Semibold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Open Runde"; src: url("/fonts/open-runde/OpenRunde-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "LT Superior Serif"; src: url("/fonts/lt-superior-serif/LTSuperiorSerif-Regular.woff") format("woff"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "LT Superior Serif"; src: url("/fonts/lt-superior-serif/LTSuperiorSerif-Medium.woff") format("woff"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "LT Superior Serif"; src: url("/fonts/lt-superior-serif/LTSuperiorSerif-Semibold.woff") format("woff"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "LT Superior Serif"; src: url("/fonts/lt-superior-serif/LTSuperiorSerif-Bold.woff") format("woff"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "LT Superior Serif"; src: url("/fonts/lt-superior-serif/LTSuperiorSerif-ExtraBold.woff") format("woff"); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Sidebar Inter"; src: url("/fonts/sidebar-study/inter.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Sidebar Geist"; src: url("/fonts/sidebar-study/geist.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Sidebar Geist Mono"; src: url("/fonts/sidebar-study/geist-mono.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard L"; src: local("GT-Standard-L-Standard-Regular"), local("GT Standard L Standard Regular"), local("GT Standard L Regular"), local("GTStandardL-Regular"), local("GT Standard L"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard L"; src: local("GT-Standard-L-Standard-Medium"), local("GT Standard L Standard Medium"), local("GT Standard L Medium"), local("GTStandardL-Medium"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard L"; src: local("GT-Standard-L-Standard-Semibold"), local("GT Standard L Standard Semibold"), local("GT Standard L Semibold"), local("GTStandardL-Semibold"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard M"; src: local("GT-Standard-M-Standard-Light"), local("GT Standard M Standard Light"), local("GT Standard M Light"), local("GTStandardM-Light"); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard M"; src: local("GT-Standard-M-Standard-Regular"), local("GT Standard M Standard Regular"), local("GT Standard M Regular"), local("GTStandardM-Regular"), local("GT Standard M"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard M"; src: local("GT-Standard-M-Standard-Medium"), local("GT Standard M Standard Medium"), local("GT Standard M Medium"), local("GTStandardM-Medium"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard M"; src: local("GT-Standard-M-Standard-Semibold"), local("GT Standard M Standard Semibold"), local("GT Standard M Semibold"), local("GTStandardM-Semibold"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard M"; src: local("GT-Standard-M-Standard-Bold"), local("GT Standard M Standard Bold"), local("GT Standard M Bold"), local("GTStandardM-Bold"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard M"; src: local("GT-Standard-M-Standard-Heavy"), local("GT Standard M Standard Heavy"), local("GT Standard M Heavy"), local("GTStandardM-Heavy"); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Standard M"; src: local("GT-Standard-M-Standard-Black"), local("GT Standard M Standard Black"), local("GT Standard M Black"), local("GTStandardM-Black"); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT America"; src: local("GT-America-LCG-VF"), local("GT America LCG VF"), local("GT America"); font-weight: 100 900; font-style: normal; font-stretch: 50% 150%; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Light"), local("GT Maru Light"); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Regular"), local("GT Maru Regular"), local("GT Maru"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Medium"), local("GT Maru Medium"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Bold"), local("GT Maru Bold"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Black"), local("GT Maru Black"); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Light-Oblique"), local("GT Maru Light Oblique"); font-weight: 300; font-style: oblique; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Regular-Oblique"), local("GT Maru Regular Oblique"); font-weight: 400; font-style: oblique; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Medium-Oblique"), local("GT Maru Medium Oblique"); font-weight: 500; font-style: oblique; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Bold-Oblique"), local("GT Maru Bold Oblique"); font-weight: 700; font-style: oblique; font-display: swap; }
+@font-face { font-family: "GT Maru"; src: local("GT-Maru-Black-Oblique"), local("GT Maru Black Oblique"); font-weight: 900; font-style: oblique; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Book"), local("GT Super Text Book"); font-weight: 350; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Regular"), local("GT Super Text Regular"), local("GT Super Text"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Medium"), local("GT Super Text Medium"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Bold"), local("GT Super Text Bold"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Black"), local("GT Super Text Black"); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Book-Italic"), local("GT Super Text Book Italic"); font-weight: 350; font-style: italic; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Regular-Italic"), local("GT Super Text Regular Italic"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Medium-Italic"), local("GT Super Text Medium Italic"); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Bold-Italic"), local("GT Super Text Bold Italic"); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "GT Super Text"; src: local("GT-Super-Text-Black-Italic"), local("GT Super Text Black Italic"); font-weight: 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "Timeless Grotesk"; src: local("TimelessSans-GroteskVF"), local("TimelessSans GroteskVF"), local("Timeless Sans Grotesk"), local("Timeless Sans Grotesk Light"); font-weight: 300 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Timeless Grotesk"; src: local("TimelessSans-GroteskItalicVF"), local("TimelessSans GroteskItalicVF"), local("Timeless Sans Grotesk Italic"), local("Timeless Sans Grotesk Light Italic"); font-weight: 300 800; font-style: italic; font-display: swap; }

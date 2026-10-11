@@ -1,75 +1,108 @@
-import { normalizeTheme, themeVariables, toCSS } from './theme.js';
+import { normalizeTheme, themeVariables, themeTypography, parseCSSColor, toCSS } from './theme.js';
+import { generateFontCSS } from './font-css.js';
+import { FONT_ASSETS, LICENSED_FONT_FACES } from './font-manifest.js';
 
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const token = ($type, $value, $description) => ({ $type, $value, ...($description ? { $description } : {}) });
 const dimension = value => ({ value: Number(value), unit: 'px' });
-const color = hex => ({ colorSpace: 'srgb', components: [1, 3, 5].map(index => parseInt(hex.slice(index, index + 2), 16) / 255), alpha: 1 });
+const color = value => { const { rgb, alpha } = parseCSSColor(value); return { colorSpace: 'srgb', components: rgb.map(channel => channel / 255), alpha }; };
+
+function shadowToken(css) {
+  const layers = [];
+  let start = 0, depth = 0;
+  for (let i = 0; i <= css.length; i++) {
+    if (css[i] === '(') depth++;
+    if (css[i] === ')') depth--;
+    if (i === css.length || (css[i] === ',' && depth === 0)) { layers.push(css.slice(start, i).trim()); start = i + 1; }
+  }
+  const values = layers.filter(layer => !['none', 'initial'].includes(layer)).map(layer => {
+    const colorText = layer.match(/rgba?\([^)]*\)|#[\da-f]{3,8}\b|\btransparent\b/i)?.[0] ?? 'transparent';
+    const dimensions = layer.replace(colorText, '').replace(/\binset\b/g, '').trim().split(/\s+/).map(parseFloat).filter(Number.isFinite);
+    return { color: color(colorText), offsetX: dimension(dimensions[0] ?? 0), offsetY: dimension(dimensions[1] ?? 0),
+      blur: dimension(dimensions[2] ?? 0), spread: dimension(dimensions[3] ?? 0), ...(layer.includes('inset') ? { inset: true } : {}) };
+  });
+  return token('shadow', values.length === 1 ? values[0] : values);
+}
 
 function designTokens(theme) {
   const modes = {};
   for (const mode of ['light', 'dark']) {
     const vars = themeVariables(theme, mode);
-    modes[mode] = { $description: `${mode} appearance`, color: {} };
+    const group = { $description: `${mode} appearance`, color: {}, scale: {}, shadow: shadowToken(vars['--t-shadow']),
+      $extensions: { 'theming.css': { variables: vars } } };
     for (const [name, value] of Object.entries(vars)) {
-      if (/^#[0-9a-f]{6}$/i.test(value)) modes[mode].color[name.replace('--t-', '')] = token('color', color(value));
+      const key = name.replace(/^--(?:t-)?/, '');
+      if (/^(?:#[\da-f]{3,8}|rgba?\([^)]*\)|transparent)$/i.test(value)) group.color[key] = token('color', color(value));
+      else if (/^--(?:space|radius|size|line|border)-/.test(name) && /^\d+(?:\.\d+)?px$/.test(value)) group.scale[key] = token('dimension', dimension(parseFloat(value)));
+      else if (/^--(?:shadow-|surface-.+-shadow)/.test(name) && !['none', 'initial'].includes(value)) group.scale[key] = shadowToken(value);
     }
-    modes[mode].shadow = token('shadow', {
-      color: { colorSpace: 'srgb', components: [0, 0, 0], alpha: Number(((theme.shadow / 100) * (mode === 'dark' ? 0.46 : 0.16)).toFixed(3)) },
-      offsetX: dimension(0), offsetY: dimension(theme.shadow ? Number((theme.shadow * 0.16 + 1).toFixed(3)) : 0),
-      blur: dimension(theme.shadow ? Number((theme.shadow * 0.55 + 3).toFixed(3)) : 0), spread: dimension(theme.shadow ? -2 : 0),
-    });
+    modes[mode] = group;
   }
   const components = {};
   for (const [component, states] of Object.entries(theme.componentStyles)) {
     components[component] = {};
     for (const [state, styles] of Object.entries(states)) {
       components[component][state] = {};
-      for (const [property, value] of Object.entries(styles)) {
-        components[component][state][property] = property === 'radius'
-          ? token('dimension', dimension(value))
-          : token('color', color(value));
-      }
+      for (const [property, value] of Object.entries(styles)) components[component][state][property] = property === 'radius'
+        ? token('dimension', dimension(value)) : token('color', color(value));
     }
   }
   const vars = themeVariables(theme);
-  const easing = { snappy: [0.2, 0.8, 0.2, 1], gentle: [0.4, 0, 0.2, 1], bouncy: [0.34, 1.56, 0.64, 1], none: [0, 0, 1, 1] };
+  const fontFamily = value => value.split(',').map(font => font.trim().replace(/^"|"$/g, ''));
+  const roles = {};
+  for (const role of ['ui', 'brand', 'editorial', 'data']) roles[role] = {
+    family: token('fontFamily', fontFamily(vars[`--font-${role}`])),
+    regular: token('fontWeight', Number(vars[`--weight-${role}-regular`])),
+    medium: token('fontWeight', Number(vars[`--weight-${role}-medium`])),
+    heavy: token('fontWeight', Number(vars[`--weight-${role}-heavy`])),
+  };
+  const sizes = {};
+  for (const size of ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl']) sizes[size] = {
+    size: token('dimension', dimension(parseFloat(vars[`--size-${size}`]))),
+    line: token('dimension', dimension(parseFloat(vars[`--line-${size}`]))),
+    tracking: token('dimension', dimension(Number((parseFloat(vars[`--letter-spacing-${size}`]) * parseFloat(vars[`--size-${size}`])).toFixed(4)))),
+  };
+  const easing = vars['--t-easing'].startsWith('cubic-bezier(') ? vars['--t-easing'].match(/-?\d*\.?\d+/g).map(Number) : [0, 0, 1, 1];
   return {
-    $description: `Design tokens for ${theme.name}. DTCG 2025.10 format; light and dark are separate mode groups.`,
+    $description: `Design tokens for ${theme.name}. DTCG 2025.10 format; exact resolved light and dark groups.`,
     ...modes,
     ...(Object.keys(components).length ? { components } : {}),
     layout: {
-      radius: token('dimension', dimension(theme.radius)),
+      radius: token('dimension', dimension(parseFloat(vars['--t-radius']))),
       'radius-sm': token('dimension', dimension(parseFloat(vars['--t-radius-sm']))),
-      'border-width': token('dimension', dimension(theme.borderWidth)),
-      space: token('dimension', dimension(parseFloat(vars['--t-space'])), '16px × spacing / 100 × (0.74 + airiness × 0.004).'),
+      'border-width': token('dimension', dimension(parseFloat(vars['--t-border-width']))),
+      space: token('dimension', dimension(parseFloat(vars['--t-space'])), 'Captured spacing scale multiplied by user spacing and airiness deltas.'),
       'control-height': token('dimension', dimension(parseFloat(vars['--t-control-height']))),
     },
     typography: {
-      'font-family': token('fontFamily', vars['--t-font'].split(',').map(font => font.trim().replace(/^"|"$/g, ''))),
-      'font-size': token('dimension', dimension(theme.fontSize)),
+      'font-family': token('fontFamily', fontFamily(vars['--t-font'])),
+      'font-size': token('dimension', dimension(parseFloat(vars['--t-font-size']))),
       'font-weight': token('fontWeight', Number(vars['--t-font-weight'])),
-      'line-height': token('number', theme.lineHeight),
-      'letter-spacing': token('dimension', dimension(Number((theme.letterSpacing * theme.fontSize).toFixed(4))), 'CSS em value resolved to pixels using the base font size.'),
+      'line-height': token('number', Number(vars['--t-line-height'])),
+      'letter-spacing': token('dimension', dimension(Number((parseFloat(vars['--t-letter-spacing']) * parseFloat(vars['--t-font-size'])).toFixed(4)))),
+      roles, sizes,
     },
     motion: {
-      duration: token('duration', { value: theme.motion === 'none' ? 0 : theme.duration, unit: 'ms' }),
-      easing: token('cubicBezier', easing[theme.motion]),
+      duration: token('duration', { value: parseFloat(vars['--t-duration']), unit: 'ms' }),
+      easing: token('cubicBezier', easing),
     },
     icon: { stroke: token('number', theme.iconStroke) },
   };
 }
 
 /** Files are regular text and can be saved individually or bundled with createZip. */
-export function createExportFiles(input) {
+export function createExportFiles(input, { fontAssetBase = 'https://theming-rho.vercel.app', licensedFontBase = '' } = {}) {
   const theme = normalizeTheme(input);
   const variables = themeVariables(theme);
+  const typography = themeTypography(theme);
   return {
     'theme.json': json(theme),
-    'theme.css': toCSS(theme),
+    'theme.css': generateFontCSS({assetBase:fontAssetBase,licensedBase:licensedFontBase})+toCSS(theme),
+    'FONT_SETUP.md': fontSetup(typography),
     'tokens.json': json(designTokens(theme)),
     'GUI.md': `# ${theme.name} — implementation guide
 
-This is a portable, original theme created with Theming. Use this guide as project context for a coding agent.
+This is a portable theme configured with Theming. Its preset values reproduce publicly observed reference design tokens. Use this guide as project context for a coding agent.
 
 ## Apply the theme
 
@@ -83,7 +116,7 @@ This is a portable, original theme created with Theming. Use this guide as proje
 
 - Preset: ${theme.preset}; neutral family: ${theme.neutral}.
 - Brand: ${theme.brand}; primary controls use ${theme.primary}.
-- Typography: ${theme.font}, ${theme.fontSize}px, line height ${theme.lineHeight}, tracking ${theme.letterSpacing}em.
+- Typography: ${typography.label} (${theme.font}); ${theme.fontSize}px body, line height ${theme.lineHeight}, tracking delta ${theme.letterSpacing}em.\n- Font roles: UI ${typography.fontUI}; brand ${typography.fontBrand}; editorial ${typography.fontEditorial}; data ${typography.fontData}.
 - Radius: ${theme.radius}px; borders: ${theme.borderWidth}px; shadow strength: ${theme.shadow}/100.
 - Spacing: ${theme.spacing}%; airiness: ${theme.airiness}/100; effective unit: ${variables['--t-space']}.
 - Boldness: ${theme.boldness}/100; derived UI emphasis weight: ${variables['--t-font-weight']}.
@@ -92,9 +125,9 @@ This is a portable, original theme created with Theming. Use this guide as proje
 
 ## Component styles
 
-Optional \`componentStyles\` overrides individual components independently of the global theme. Supported component keys are \`button\`, \`input\`, \`select\`, \`textarea\`, \`switch\`, and \`card\`. Each accepts \`base\`, \`hover\`, \`active\`, \`focus\`, and \`disabled\` state objects. Allowed properties are \`background\`, \`color\`, and \`borderColor\` (hex colors) plus \`radius\` (0–48 pixels).
+Optional \`componentStyles\` overrides individual components independently of the global theme. Supported component keys are \`button\`, \`input\`, \`select\`, \`textarea\`, \`switch\`, and \`card\`. Each accepts \`base\`, \`hover\`, \`active\`, \`focus\`, and \`disabled\` state objects. Allowed properties are \`background\`, \`color\`, and \`borderColor\` (hex colors, including 8-digit alpha) plus \`radius\` (0–48 pixels).
 
-These overrides apply to both appearances and every button variant. The base state remains active underneath interaction states. Hover and active exclude disabled controls; focus uses the native focus-visible state. Card disabled styling uses aria-disabled="true". Exported CSS contains ordinary interaction selectors and no forced preview states. In the editor, componentCSS(theme, { preview: true }) also emits forced-state rules activated by data-forced-component and data-forced-state on the .preview container. Optional forceComponent and forceState arguments limit those editor rules. The actual control remains interactive; forcing a visual disabled state does not disable its behavior.
+These overrides apply to both appearances and every button variant. The base state remains active underneath interaction states. Hover and active exclude disabled controls; focus uses the native focus-visible state. Card disabled styling uses aria-disabled="true". Exported CSS contains ordinary interaction selectors and no forced preview states. In the editor, componentCSS(theme, { preview: true }) also emits forced-state rules activated by data-forced-component and data-forced-state on the .preview container. Optional forceComponent and forceState arguments limit those editor rules. The editor temporarily disables the selected native controls while previewing Disabled; leaving that state restores their previous availability.
 
 The JSON configuration preserves all overrides, CSS applies them to the supplied native components, and design tokens include a components group with typed per-state values. Clear a property or state to inherit the global theme again. Custom component colors can change text contrast; check foreground/background pairs after editing.
 
@@ -102,11 +135,11 @@ The JSON configuration preserves all overrides, CSS applies them to the supplied
 
 \`theme.json\` is the editable source configuration, using schema version 1. Reimport it into Theming to change settings and regenerate the package. \`tokens.json\` follows the Design Tokens Community Group 2025.10 format. It keeps light and dark colors in separate groups; it is not a resolver or framework configuration.
 
-Changes to airiness multiply the spacing scale: 16 × (spacing / 100) × (0.74 + airiness × 0.004). Control height is 32px plus half that resulting unit. Boldness changes emphasis font weight (450–700 in 50-point steps) and subtly increases border contrast above 50. Radius, border width, and shadow remain independent controls. Frosted adds surface translucency and backdrop blur. A primary or brand background always uses the higher-contrast black or white text; brand-colored text is separately adjusted to a minimum 4.5:1 contrast on the surface.
+Each of the six presets starts from its captured light/dark token table. Typography roles (UI, brand, editorial, data), font weights, seven size/leading/tracking tiers, spacing, radii, ten neutrals, four brand colors, motion, and layered shadows remain exact at the preset defaults. User controls apply deltas relative to that preset, rather than flattening all presets into a shared scale. Airiness and spacing multiply the captured spacing scale; font size and line height scale the captured type sizes; letter spacing adds an em delta. Boldness adjusts role weights. Radius scales the preset radius tiers. Shadow strength scales captured opacity. Color overrides apply last. The raw CSS variables and their semantic aliases are both exported; the complete resolved variable table is also preserved in the design token extensions. Branded text uses a separate contrast-adjusted alias; raw captured colors remain faithful to the source.
 
-Optional \`colors.light\` and \`colors.dark\` contain per-appearance hex overrides for bg, surface, surfaceAlt, text, muted, border, and brand. Overrides are preserved exactly. The editor’s quick brand-color control replaces the global brand and clears mode-specific brand overrides; other overrides remain unchanged. Clear an override to return to the derived value. An explicit border override is not modified by boldness. Check contrast after manually overriding text or surfaces.\n\nUse \`--t-bg\` for the page, \`--t-surface\` for cards, \`--t-surface-alt\` for inset regions, \`--t-text\` and \`--t-muted\` for content, and \`--t-primary\` / \`--t-on-primary\` together for calls to action. Use \`--t-accent-text\` for branded text, not the raw brand color. Use \`--t-glass\` for surfaces that should respect Frosted translucency.
+Optional \`colors.light\` and \`colors.dark\` contain per-appearance hex overrides for bg, surface, surfaceAlt, text, muted, border, and brand. Overrides are preserved exactly. The editor’s quick brand-color control replaces the global brand and clears mode-specific brand overrides; other overrides remain unchanged. Clear an override to return to the derived value. An explicit border override is not modified by boldness. Check contrast after manually overriding text or surfaces.\n\nUse \`--t-bg\` for the page, \`--t-surface\` for cards, \`--t-surface-alt\` for inset regions, \`--t-text\` and \`--t-muted\` for content, and \`--t-primary\` / \`--t-on-primary\` together for calls to action. Use \`--t-accent-text\` for branded text, not the raw brand color.
 
-Preserve native element semantics and focus rings. Give every input a visible label. Icon-only buttons require an accessible name. Avoid color as the only status signal. Never remove reduced-motion handling. No hosted service, API, authentication, or font download is included in this export.
+Preserve native element semantics and focus rings. Give every input a visible label. Icon-only buttons require an accessible name. Avoid color as the only status signal. Never remove reduced-motion handling. Standalone CSS uses the font asset URLs embedded in its @font-face rules. The complete kit includes the selected OFL fonts, their licenses, and any matching fonts you added in this browser; FONT_SETUP.md lists any licensed faces you must supply.
 `,
     'ThemeProvider.tsx': providerSource(theme),
     'components.tsx': componentsSource,
@@ -163,11 +196,28 @@ export default function App() {
 - \`ThemeProvider.tsx\`: scoped React appearance provider.
 - \`components.tsx\`: original native React primitives, not a full component framework.
 
-All fonts have local fallbacks. To use Inter or Nunito consistently across systems, self-host the font and declare it with @font-face. Dialog is a native HTML dialog: use a ref and \`showModal()\` / \`close()\` so browser focus management and Escape handling work. It requires an accessible label. Inputs need visible labels; Field pairs a label with your input's ID.
+This package records exact font-family stacks, separate UI/brand/editorial/data roles, and weights. The complete kit includes the selected OFL font files and their licenses. Fonts added by you in this browser are also included. Commercial GT fonts and Timeless are not supplied by Theming; see FONT_SETUP.md for the exact filenames. Individual CSS downloads reference the deployed OFL asset URLs. The preset's Free alternative uses the observed alternative families. System fallback rendering will differ until fonts load. Dialog is a native HTML dialog: use a ref and \`showModal()\` / \`close()\` so browser focus management and Escape handling work. It requires an accessible label. Inputs need visible labels; Field pairs a label with your input's ID.
 
 Design tokens specification: https://www.designtokens.org/TR/2025.10/format/
 `,
   };
+}
+
+function fontSetup(typography) {
+  const families=new Set(Object.values(typography.roles).map(role=>role.family.split(',')[0].trim().replace(/^"|"$/g,'')));
+  const faces=[...FONT_ASSETS,...LICENSED_FONT_FACES].filter(face=>families.has(face.family));
+  return `# Font setup
+
+The exact families, roles, weights, and original filenames are preserved below.
+
+`+
+    faces.map(face=>`- ${face.family}, weight ${face.weight}, ${face.style}: ${face.path}`).join('\n')+
+    `
+
+The ZIP includes relevant OFL files and licenses fetched from the editor, plus matching fonts you explicitly added in this browser. GT and Timeless files are not supplied automatically. Add your authorized files at the listed paths or install matching local faces. Preserve OFL notices. Check your own webfont license before publishing commercial or Timeless assets.
+
+Individual CSS downloads use absolute OFL asset URLs. ZIP CSS uses relative URLs and works independently when the included fonts directory stays next to theme.css.
+`;
 }
 
 function providerSource(theme) {
@@ -272,17 +322,17 @@ function crc32(bytes) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-/** Standards-compliant, uncompressed ZIP with UTF-8 names and CRC-32 checksums. */
+/** Standards-compliant ZIP with UTF-8 names, CRC-32, and text or Uint8Array file contents. */
 export function createZip(files) {
-  if (!files || typeof files !== 'object' || Array.isArray(files)) throw new TypeError('ZIP files must be a filename-to-text object.');
+  if (!files || typeof files !== 'object' || Array.isArray(files)) throw new TypeError('ZIP files must be a filename-to-content object.');
   const entries = Object.entries(files);
   if (entries.length > 65535) throw new RangeError('Too many files for this ZIP export.');
   const encoder = new TextEncoder();
   let localSize = 0, centralSize = 0;
   const prepared = entries.map(([name, content]) => {
     if (!name || name.startsWith('/') || name.includes('\\') || name.includes('\0') || name.split('/').some(part => part === '..' || part === '.')) throw new TypeError('ZIP filenames must be safe relative paths.');
-    if (typeof content !== 'string') throw new TypeError(`ZIP entry ${name} must contain text.`);
-    const nameBytes = encoder.encode(name), data = encoder.encode(content);
+    if (typeof content !== 'string' && !(content instanceof Uint8Array)) throw new TypeError(`ZIP entry ${name} must contain text or a Uint8Array.`);
+    const nameBytes = encoder.encode(name), data = typeof content === 'string' ? encoder.encode(content) : content;
     if (nameBytes.length > 65535) throw new RangeError('ZIP filename is too long.');
     if (data.length > 0xffffffff) throw new RangeError('ZIP entry is too large.');
     const entry = { name: nameBytes, data, crc: crc32(data), offset: localSize };

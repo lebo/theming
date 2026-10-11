@@ -1,59 +1,43 @@
 /** Original, dependency-free theme model. All derived styles originate here. */
+import { REFERENCE_TOKENS, FREE_FONT_OVERRIDES, REFERENCE_COMPONENTS } from './reference-tokens.js';
+
 const BASE = {
-  version: 1,
-  name: 'Canvas',
-  preset: 'canvas',
-  mode: 'light',
-  brand: '#d2f34a',
-  neutral: 'mono',
-  primary: 'neutral',
-  font: 'system',
-  fontSize: 14,
-  lineHeight: 1.5,
-  letterSpacing: -0.01,
-  radius: 12,
-  borderWidth: 1,
-  shadow: 12,
-  spacing: 100,
-  boldness: 50,
-  airiness: 65,
-  iconStyle: 'outline',
-  iconStroke: 1.7,
-  motion: 'snappy',
-  duration: 180,
+  version: 1, baselineVersion: 2, name: 'Felt', preset: 'felt', mode: 'light',
+  brand: '#fc032d', neutral: 'mono', primary: 'neutral', font: 'licensed',
+  fontSize: 16, lineHeight: 1.5, letterSpacing: 0, radius: 12, borderWidth: 0,
+  shadow: 50, spacing: 100, boldness: 52, airiness: 63,
+  iconStyle: 'outline', iconStroke: 2, motion: 'snappy', duration: 200,
   colors: Object.freeze({ light: Object.freeze({}), dark: Object.freeze({}) }),
   componentStyles: Object.freeze({}),
 };
-
 const preset = (id, name, description, changes) => Object.freeze({
   id, name, description, theme: Object.freeze({ ...BASE, ...changes, name, preset: id }),
 });
-
 export const PRESETS = Object.freeze([
-  preset('canvas', 'Canvas', 'A clean slate. Quiet details, confident contrast.', {}),
-  preset('felt', 'Felt', 'Soft corners, a warm red, and a little personality.', {
-    brand: '#e53b45', primary: 'brand', neutral: 'stone', font: 'rounded', radius: 20,
-    borderWidth: 0, shadow: 20, boldness: 60, airiness: 70, motion: 'bouncy', duration: 240,
+  preset('felt', 'Felt', 'Expressive red, soft surfaces, and GT Standard L.', {}),
+  preset('canvas', 'Canvas', 'Technical clarity, electric yellow, and GT Standard M.', {
+    brand: '#e0e709', primary: 'brand', mode: 'dark', radius: 9, borderWidth: 1, boldness: 50, airiness: 83,
   }),
-  preset('outline', 'Outline', 'Crisp edges and expressive blue outlines.', {
-    brand: '#255cdb', primary: 'brand', neutral: 'slate', radius: 3, borderWidth: 1.5,
-    shadow: 0, boldness: 60, airiness: 50, letterSpacing: 0, motion: 'snappy', duration: 130,
+  preset('jelly', 'Jelly', 'Playful green, generous curves, and GT Maru.', {
+    brand: '#00c853', primary: 'brand', neutral: 'warm', radius: 22, boldness: 75, airiness: 100, iconStyle: 'solid',
   }),
-  preset('cream', 'Cream', 'Warm paper, gentle curves, and a terracotta accent.', {
-    brand: '#bf5a31', primary: 'brand', neutral: 'sand', font: 'serif', radius: 18,
-    borderWidth: 1, shadow: 12, airiness: 75, boldness: 45, motion: 'gentle', duration: 280,
+  preset('paper', 'Paper', 'Warm editorial surfaces, purple, and GT Super Text.', {
+    brand: '#321b46', primary: 'brand', neutral: 'warm', borderWidth: 1, boldness: 50, airiness: 70,
   }),
-  preset('frosted', 'Frosted', 'Cool lavender and soft, translucent surfaces.', {
-    brand: '#7957d5', primary: 'brand', neutral: 'slate', radius: 22, borderWidth: 1,
-    shadow: 35, airiness: 70, boldness: 45, motion: 'gentle', duration: 250,
+  preset('alloy', 'Alloy', 'Metallic depth, violet accents, and GT America.', {
+    brand: '#7d43bd', borderWidth: 1, boldness: 50, airiness: 82,
+  }),
+  preset('base', 'Base', 'A neutral starting point with Inter.', {
+    brand: '#000000', borderWidth: 1, boldness: 50, airiness: 50,
   }),
 ]);
-
-export const defaultTheme = Object.freeze({ ...BASE });
+const PRESET_BY_ID = Object.fromEntries(PRESETS.map(value => [value.id, value]));
+const LEGACY_PRESETS = { outline: 'base', cream: 'paper', frosted: 'alloy' };
+export const defaultTheme = PRESETS[0].theme;
 const ENUMS = {
-  preset: ['canvas', 'felt', 'outline', 'cream', 'frosted', 'custom'],
-  mode: ['light', 'dark'], neutral: ['mono', 'stone', 'slate', 'sand'],
-  primary: ['brand', 'neutral'], font: ['system', 'inter', 'rounded', 'serif', 'mono'],
+  preset: ['felt', 'canvas', 'jelly', 'paper', 'alloy', 'base', 'custom'],
+  mode: ['light', 'dark'], neutral: ['mono', 'warm', 'stone', 'slate', 'sand'],
+  primary: ['brand', 'neutral'], font: ['licensed', 'free', 'system', 'inter', 'rounded', 'serif', 'mono'],
   iconStyle: ['outline', 'solid'], motion: ['snappy', 'gentle', 'bouncy', 'none'],
 };
 const LIMITS = {
@@ -76,11 +60,15 @@ export function normalizeTheme(input) {
   const proto = Object.getPrototypeOf(input);
   if (proto !== Object.prototype && proto !== null) throw new TypeError('A theme must be a plain JSON object.');
   if (input.version !== undefined && input.version !== 1) throw new TypeError('Unsupported theme version. Expected version 1.');
-  const result = { ...BASE, colors: { light: {}, dark: {} }, componentStyles: {} };
+  if (input.baselineVersion !== undefined && ![1, 2].includes(input.baselineVersion)) throw new TypeError('Unsupported preset baseline version.');
+  const presetId = LEGACY_PRESETS[input.preset] ?? input.preset ?? BASE.preset;
+  const result = { ...(PRESET_BY_ID[presetId]?.theme ?? BASE), colors: { light: {}, dark: {} }, componentStyles: {} };
+  result.baselineVersion = input.baselineVersion ?? (input.version === 1 ? 1 : 2);
   for (const [key, values] of Object.entries(ENUMS)) {
     if (input[key] === undefined) continue;
-    if (!values.includes(input[key])) throw new TypeError(`Invalid ${key}. Expected ${values.join(', ')}.`);
-    result[key] = input[key];
+    const value = key === 'preset' ? presetId : input[key];
+    if (!values.includes(value)) throw new TypeError(`Invalid ${key}. Expected ${values.join(', ')}.`);
+    result[key] = value;
   }
   if (input.name !== undefined) {
     if (typeof input.name !== 'string') throw new TypeError('Theme name must be text.');
@@ -97,7 +85,7 @@ export function normalizeTheme(input) {
       if (palette === null || typeof palette !== 'object' || Array.isArray(palette)) throw new TypeError(`${mode} colors must be an object.`);
       for (const [key, value] of Object.entries(palette)) {
         if (!['bg', 'surface', 'surfaceAlt', 'text', 'muted', 'border', 'brand'].includes(key)) throw new TypeError(`Unknown color token: ${key}.`);
-        result.colors[mode][key] = parseHex(value).hex;
+        result.colors[mode][key] = parseHex(value, true).hex;
       }
     }
   }
@@ -116,7 +104,7 @@ export function normalizeTheme(input) {
           if (property === 'radius') {
             if (typeof value !== 'number' || !Number.isFinite(value)) throw new TypeError('Component radius must be a finite number.');
             normalized.radius = round(clamp(value, 0, 48));
-          } else normalized[property] = parseHex(value).hex;
+          } else normalized[property] = parseHex(value, true).hex;
         }
         result.componentStyles[component][state] = normalized;
       }
@@ -130,12 +118,13 @@ export function normalizeTheme(input) {
   return result;
 }
 
-function parseHex(color) {
-  if (typeof color !== 'string' || !/^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(color)) {
-    throw new TypeError('Color must be a hex value such as #7957d5.');
+function parseHex(color, allowAlpha = false) {
+  const valid = allowAlpha ? /^#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i : /^#(?:[\da-f]{3}|[\da-f]{6})$/i;
+  if (typeof color !== 'string' || !valid.test(color)) {
+    throw new TypeError(allowAlpha ? 'Color must be a hex value such as #7957d5 or #7957d533.' : 'Color must be a hex value such as #7957d5.');
   }
   const digits = color.slice(1).toLowerCase();
-  const hex = '#' + (digits.length === 3 ? [...digits].map(c => c + c).join('') : digits);
+  const hex = '#' + (digits.length <= 4 ? [...digits].map(c => c + c).join('') : digits);
   return { hex, rgb: [1, 3, 5].map(start => parseInt(hex.slice(start, start + 2), 16)) };
 }
 const hexFromRGB = (rgb) => '#' + rgb.map(n => Math.round(clamp(n, 0, 255)).toString(16).padStart(2, '0')).join('');
@@ -144,7 +133,9 @@ function mix(a, b, amount) {
   return hexFromRGB(aa.map((value, i) => value + (bb[i] - value) * clamp(amount, 0, 1)));
 }
 function luminance(color) {
-  const linear = parseHex(color).rgb.map(n => {
+  const parsed = parseCSSColor(color);
+  const linear = parsed.rgb.map(n => {
+    n = n * parsed.alpha + 255 * (1 - parsed.alpha);
     const value = n / 255;
     return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
   });
@@ -198,63 +189,189 @@ const EASING = {
   none: 'linear',
 };
 
-/** Tokens for a particular appearance. Every input is normalized before CSS generation. */
+const REFERENCE_KEYS = [...new Set(Object.values(REFERENCE_TOKENS).flatMap(modes => Object.values(modes).flatMap(tokens => Object.keys(tokens))))];
+const ROLES = ['ui', 'brand', 'editorial', 'data'];
+const SCALES = ['xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl'];
+const pxScale = (value, factor) => `${round(parseFloat(value) * factor)}px`;
+const fontLabel = family => family.split(',')[0].trim().replace(/^"|"$/g, '');
+
+/** Roles are kept separate: Paper's editorial serif and Canvas's data mono are intentional. */
+export function themeTypography(input) {
+  const theme = normalizeTheme(input);
+  const tokens = themeVariables(theme);
+  const roles = Object.fromEntries(ROLES.map(role => [role, {
+    family: tokens[`--font-${role}`],
+    regular: Number(tokens[`--weight-${role}-regular`]),
+    medium: Number(tokens[`--weight-${role}-medium`]),
+    heavy: Number(tokens[`--weight-${role}-heavy`]),
+  }]));
+  return { label: fontLabel(roles.brand.family), fontUI: roles.ui.family, fontBrand: roles.brand.family,
+    fontEditorial: roles.editorial.family, fontData: roles.data.family, licensed: theme.font === 'licensed', roles };
+}
+
+/** Parse exported reference hex/rgb colors, including alpha. Does not accept arbitrary CSS. */
+export function parseCSSColor(value) {
+  if (value === 'transparent') return { rgb: [0, 0, 0], alpha: 0 };
+  if (typeof value !== 'string') throw new TypeError('Expected a CSS color string.');
+  if (/^#[\da-f]{3,4}$/i.test(value)) value = '#' + [...value.slice(1)].map(c => c + c).join('');
+  if (/^#(?:[\da-f]{6}|[\da-f]{8})$/i.test(value)) return {
+    rgb: [1, 3, 5].map(index => parseInt(value.slice(index, index + 2), 16)),
+    alpha: value.length === 9 ? parseInt(value.slice(7), 16) / 255 : 1,
+  };
+  const match = value.match(/^rgba?\(([^)]+)\)$/i);
+  if (match) {
+    const bits = match[1].replace(/\//g, ',').split(/[\s,]+/).filter(Boolean);
+    if (bits.length >= 3 && bits.length <= 4 && bits.every(bit => /^[\d.]+%?$/.test(bit))) {
+      const rgb = bits.slice(0, 3).map(bit => clamp(parseFloat(bit) * (bit.endsWith('%') ? 2.55 : 1), 0, 255));
+      const a = bits[3];
+      return { rgb, alpha: a === undefined ? 1 : clamp(parseFloat(a) / (a.endsWith('%') ? 100 : 1), 0, 1) };
+    }
+  }
+  throw new TypeError(`Unsupported CSS color: ${value}`);
+}
+/** Normalize hex/rgb reference colors for text fields or native opaque color wells. */
+export function colorToHex(value, { includeAlpha = true } = {}) {
+  const { rgb, alpha } = parseCSSColor(value);
+  return hexFromRGB(rgb) + (includeAlpha && alpha < 1 ? Math.round(alpha * 255).toString(16).padStart(2, '0') : '');
+}
+const colorHex = value => colorToHex(value, { includeAlpha: false });
+const transparentHex = (hex, alpha = '33') => `${hex.slice(0, 7)}${alpha}`;
+function remapHexColors(tokens, replacements) {
+  for (const key of Object.keys(tokens)) tokens[key] = tokens[key].replace(/#[\da-f]{8}\b|#[\da-f]{6}\b/gi, match => {
+    const replacement = replacements[match.slice(0, 7).toLowerCase()];
+    return replacement ? replacement.slice(0, 7) + (replacement.length === 9 ? replacement.slice(7) : match.slice(7)) : match;
+  });
+}
+function shadowStrength(value, factor) {
+  if (factor === 1) return value;
+  if (factor === 0) return 'none';
+  return value.replace(/#[\da-f]{8}\b/gi, hex => hex.slice(0, 7) + Math.round(clamp(parseInt(hex.slice(7), 16) * factor, 0, 255)).toString(16).padStart(2, '0'));
+}
+
+/** Exact captured defaults, followed by independent user changes and semantic aliases. */
 export function themeVariables(input, mode) {
   const theme = normalizeTheme(input);
   const appearance = mode ?? theme.mode;
   if (!ENUMS.mode.includes(appearance)) throw new TypeError('Invalid mode. Expected light or dark.');
-  const dark = appearance === 'dark';
-  let [bg, surface, surfaceAlt, text, muted, border] = PALETTES[theme.neutral][appearance];
+  const id = PRESET_BY_ID[theme.preset] ? theme.preset : 'felt';
+  const baseline = PRESET_BY_ID[id].theme;
+  const captured = REFERENCE_TOKENS[id][appearance];
+  // Reset absent preset-only values so switching styles cannot retain the last preset's surfaces.
+  const tokens = Object.fromEntries(REFERENCE_KEYS.map(key => [key, captured[key] ?? 'initial']));
   const overrides = theme.colors[appearance];
-  const brand = overrides.brand ?? theme.brand;
-  if (theme.preset === 'frosted') {
-    bg = mix(bg, brand, dark ? 0.09 : 0.06);
-    surfaceAlt = mix(surfaceAlt, brand, dark ? 0.1 : 0.045);
+  const replacements = {};
+  if (theme.neutral !== baseline.neutral) {
+    const palette = PALETTES[theme.neutral === 'warm' ? 'sand' : theme.neutral][appearance];
+    const [, surface, surfaceAlt, text, muted, border] = palette;
+    const stops = [surface, mix(surface, surfaceAlt, 0.3), surfaceAlt, border, mix(border, muted, 0.4), mix(border, muted, 0.75), muted, mix(muted, text, 0.4), mix(muted, text, 0.75), text];
+    for (let i = 1; i <= 10; i++) replacements[captured[`--neutral-${i}`].toLowerCase()] = stops[i - 1];
   }
-  bg = overrides.bg ?? bg;
-  surface = overrides.surface ?? surface;
-  surfaceAlt = overrides.surfaceAlt ?? surfaceAlt;
-  text = overrides.text ?? text;
-  muted = overrides.muted ?? muted;
-  border = overrides.border ?? border;
-  const primary = theme.primary === 'brand' ? brand : text;
-  // Character is compositional: airiness scales spacing, while boldness adjusts weight and edge contrast.
-  const space = 16 * (theme.spacing / 100) * (0.74 + theme.airiness * 0.004);
-  const weight = Math.round((450 + theme.boldness * 2.5) / 50) * 50;
-  if (overrides.border === undefined) border = mix(border, text, Math.max(0, theme.boldness - 50) * 0.0018);
-  const shadowAlpha = round((theme.shadow / 100) * (dark ? 0.46 : 0.16));
-  const shadow = theme.shadow === 0 ? 'none' : `0 ${round(theme.shadow * 0.16 + 1)}px ${round(theme.shadow * 0.55 + 3)}px -2px rgb(0 0 0 / ${shadowAlpha})`;
-  return {
-    '--t-bg': bg,
-    '--t-surface': surface,
-    '--t-surface-alt': surfaceAlt,
-    '--t-text': text,
-    '--t-muted': muted,
-    '--t-border': border,
-    '--t-brand': brand,
-    '--t-on-brand': readableText(brand),
-    '--t-primary': primary,
-    '--t-on-primary': readableText(primary),
-    '--t-radius': `${theme.radius}px`,
-    '--t-radius-sm': `${round(theme.radius * 0.625)}px`,
-    '--t-border-width': `${theme.borderWidth}px`,
-    '--t-shadow': shadow,
-    '--t-font': FONTS[theme.font],
-    '--t-font-size': `${theme.fontSize}px`,
-    '--t-line-height': `${theme.lineHeight}`,
-    '--t-letter-spacing': `${theme.letterSpacing}em`,
-    '--t-space': `${round(space)}px`,
-    '--t-duration': `${theme.motion === 'none' ? 0 : theme.duration}ms`,
-    '--t-easing': EASING[theme.motion],
-    '--t-icon-stroke': `${theme.iconStroke}`,
-    '--t-icon-fill': theme.iconStyle === 'solid' ? 'currentColor' : 'none',
-    '--t-font-weight': `${weight}`,
-    '--t-accent-text': accessibleAccent(brand, surface),
-    '--t-brand-soft': mix(surface, brand, dark ? 0.2 : 0.14),
-    '--t-control-height': `${round(32 + space * 0.5)}px`,
-    '--t-glass': theme.preset === 'frosted' ? `rgb(${parseHex(surface).rgb.join(' ')} / ${dark ? 0.78 : 0.76})` : surface,
-    '--t-blur': theme.preset === 'frosted' ? '16px' : '0px',
+  for (const [override, tokenName] of [['surface', '--neutral-1'], ['surfaceAlt', '--neutral-3'], ['text', '--neutral-10'], ['muted', '--neutral-7']]) {
+    if (overrides[override]) replacements[captured[tokenName].toLowerCase()] = overrides[override];
+  }
+  const neutralReplacements = { ...replacements };
+  const changedBrand = overrides.brand ?? (theme.brand.toLowerCase() !== baseline.brand.toLowerCase() ? theme.brand : null);
+  if (changedBrand) replacements[captured['--color-1'].toLowerCase()] = changedBrand;
+  if (Object.keys(replacements).length) remapHexColors(tokens, replacements);
+  // Token roles remain independent even when a preset shares a hex between brand and text.
+  for (let i = 1; i <= 10; i++) {
+    const original = captured[`--neutral-${i}`];
+    const resolved = neutralReplacements[original.toLowerCase()] ?? original;
+    tokens[`--neutral-${i}`] = resolved;
+    tokens[`--neutral-${i}-transparent`] = resolved === original ? captured[`--neutral-${i}-transparent`] : transparentHex(resolved);
+  }
+  for (let i = 1; i <= 4; i++) {
+    const resolved = i === 1 && changedBrand ? changedBrand : captured[`--color-${i}`];
+    tokens[`--color-${i}`] = resolved;
+    tokens[`--color-${i}-transparent`] = i === 1 && changedBrand ? transparentHex(resolved) : captured[`--color-${i}-transparent`];
+  }
+  for (const key of ['--cte-canvas', '--cte-surface', '--cte-surface-muted', '--cte-text', '--cte-text-muted']) {
+    tokens[key] = neutralReplacements[captured[key].toLowerCase()] ?? captured[key];
+  }
+  if (overrides.bg) tokens['--cte-canvas'] = overrides.bg;
+  if (overrides.surface) tokens['--cte-surface'] = overrides.surface;
+  if (overrides.surfaceAlt) tokens['--cte-surface-muted'] = overrides.surfaceAlt;
+  if (overrides.text) tokens['--cte-text'] = overrides.text;
+  if (overrides.muted) tokens['--cte-text-muted'] = overrides.muted;
+  if (overrides.border) tokens['--border-default-color'] = tokens['--cte-border'] = overrides.border;
+  if (changedBrand) {
+    tokens['--cte-accent'] = tokens['--cte-focus'] = tokens['--color-1'] = changedBrand;
+    tokens['--cte-accent-text'] = readableText(changedBrand);
+  }
+
+  const typeRatio = theme.fontSize / baseline.fontSize;
+  const leadingRatio = theme.lineHeight / baseline.lineHeight;
+  const spaceRatio = (theme.spacing / baseline.spacing) * ((0.74 + theme.airiness * 0.004) / (0.74 + baseline.airiness * 0.004));
+  const radiusRatio = theme.radius / baseline.radius;
+  const weightDelta = theme.boldness - baseline.boldness;
+  for (const size of SCALES) {
+    if (typeRatio !== 1) tokens[`--size-${size}`] = pxScale(tokens[`--size-${size}`], typeRatio);
+    if (typeRatio !== 1 || leadingRatio !== 1) tokens[`--line-${size}`] = pxScale(tokens[`--line-${size}`], typeRatio * leadingRatio);
+    if (theme.letterSpacing !== baseline.letterSpacing) tokens[`--letter-spacing-${size}`] = `${round(parseFloat(tokens[`--letter-spacing-${size}`]) + theme.letterSpacing - baseline.letterSpacing)}em`;
+  }
+  if (spaceRatio !== 1) for (const key of Object.keys(tokens)) if (/^--space-/.test(key)) tokens[key] = pxScale(tokens[key], spaceRatio);
+  if (radiusRatio !== 1) for (const size of ['xs', 's', 'm', 'l', 'xl']) tokens[`--radius-${size}`] = pxScale(tokens[`--radius-${size}`], radiusRatio);
+  if (theme.borderWidth !== baseline.borderWidth) {
+    for (const size of ['s', 'm', 'l']) tokens[`--border-${size}`] = `${round(theme.borderWidth * (size === 'l' ? 2 : 1))}px`;
+    for (const size of ['s', 'm', 'l']) tokens[`--border-shadow-${size}`] = `0 0 0 ${tokens[`--border-${size}`]} ${tokens['--border-default-color']}`;
+  }
+  if (theme.shadow !== baseline.shadow) for (const key of Object.keys(tokens)) if (key.startsWith('--shadow-') || /^--surface-.+-shadow$/.test(key)) tokens[key] = shadowStrength(tokens[key], theme.shadow / baseline.shadow);
+  if (theme.font === 'free') Object.assign(tokens, FREE_FONT_OVERRIDES[id]);
+  if (!['licensed', 'free'].includes(theme.font)) {
+    for (const role of ROLES) tokens[`--font-${role}`] = FONTS[theme.font];
+    tokens['--cte-font'] = FONTS[theme.font];
+  }
+  if (weightDelta) for (const role of ROLES) for (const weight of ['regular', 'medium', 'heavy']) tokens[`--weight-${role}-${weight}`] = `${clamp(Math.round((Number(tokens[`--weight-${role}-${weight}`]) + weightDelta * 2) / 25) * 25, 100, 900)}`;
+  if (typeRatio !== 1) for (const key of ['--cte-font-size', '--cte-detail-font-size']) tokens[key] = pxScale(tokens[key], typeRatio);
+  if (typeRatio !== 1 || leadingRatio !== 1) for (const key of ['--cte-line-height', '--cte-detail-line-height']) tokens[key] = pxScale(tokens[key], typeRatio * leadingRatio);
+  if (theme.letterSpacing !== baseline.letterSpacing) for (const key of ['--cte-letter-spacing', '--cte-detail-letter-spacing']) tokens[key] = `${round(parseFloat(tokens[key]) + theme.letterSpacing - baseline.letterSpacing)}em`;
+  if (theme.iconStroke !== baseline.iconStroke) tokens['--icon-stroke-width'] = `${theme.iconStroke}`;
+  if (theme.iconStyle !== baseline.iconStyle) tokens['--theme-icon-style'] = theme.iconStyle === 'solid' ? 'filled' : 'outlined';
+  if (theme.motion !== baseline.motion) tokens['--motion-easing'] = tokens['--motion-large-easing'] = EASING[theme.motion];
+  if (theme.duration !== baseline.duration || theme.motion === 'none') {
+    const durationRatio = theme.motion === 'none' ? 0 : theme.duration / baseline.duration;
+    for (const key of ['--motion-duration', '--motion-large-duration']) tokens[key] = `${round(parseFloat(captured[key]) * durationRatio)}ms`;
+    for (const key of ['--motion-visual-duration', '--motion-large-visual-duration']) tokens[key] = `${round(Number(captured[key]) * durationRatio)}`;
+  }
+  if (theme.motion === 'none') tokens['--motion-enabled'] = '0';
+
+  const brand = tokens['--color-1'];
+  const surface = tokens['--neutral-1'];
+  const primary = theme.primary === 'brand' ? brand : tokens['--neutral-10'];
+  const onPrimary = theme.primary === 'brand' ? tokens['--cte-accent-text'] : surface;
+  const button = REFERENCE_COMPONENTS[id][appearance].button;
+  let buttonBackground = button['background-color'], buttonColor = button.color;
+  if (theme.primary !== baseline.primary || changedBrand || theme.neutral !== baseline.neutral || overrides.text || overrides.surface) {
+    buttonBackground = primary; buttonColor = onPrimary;
+  }
+  const buttonSize = parseFloat(button['font-size']);
+  const bodySize = parseFloat(tokens['--size-m']);
+  const aliases = {
+    '--t-bg': tokens['--cte-canvas'], '--t-surface': surface, '--t-surface-alt': tokens['--cte-surface-muted'],
+    '--t-text': tokens['--cte-text'], '--t-muted': tokens['--cte-text-muted'], '--t-border': tokens['--border-default-color'],
+    '--t-brand': brand, '--t-on-brand': tokens['--cte-accent-text'], '--t-primary': primary, '--t-on-primary': onPrimary,
+    '--t-radius': `${round((id === 'canvas' ? 9 : 24) * radiusRatio)}px`, '--t-radius-sm': tokens['--radius-s'],
+    '--t-border-width': tokens['--border-m'], '--t-shadow': tokens['--shadow-s'],
+    '--t-font': tokens['--font-ui'], '--t-font-size': tokens['--size-m'], '--t-line-height': `${round(parseFloat(tokens['--line-m']) / bodySize)}`,
+    '--t-letter-spacing': tokens['--letter-spacing-m'], '--t-space': tokens['--space-m'], '--t-duration': tokens['--motion-duration'],
+    '--t-easing': tokens['--motion-easing'], '--t-icon-stroke': tokens['--icon-stroke-width'], '--t-icon-fill': theme.iconStyle === 'solid' ? 'currentColor' : 'none',
+    '--t-font-weight': tokens['--weight-ui-medium'], '--t-accent-text': accessibleAccent(colorHex(brand), colorHex(surface)),
+    '--t-brand-soft': tokens['--color-1-transparent'], '--t-control-height': `${round(parseFloat(button.height) * spaceRatio)}px`,
+    '--t-glass': surface, '--t-blur': '0px',
+    '--t-button-background': buttonBackground, '--t-button-color': buttonColor,
+    '--t-button-radius': `${round(parseFloat(button['border-radius']) * radiusRatio)}px`,
+    '--t-button-font-size': `${round(buttonSize * typeRatio)}px`, '--t-button-line-height': `${round(parseFloat(button['line-height']) * typeRatio * leadingRatio)}px`,
+    '--t-button-font-weight': `${clamp(Number(button['font-weight']) + weightDelta * 2, 100, 900)}`,
+    '--t-button-letter-spacing': `${round((button['letter-spacing'] === 'normal' ? 0 : parseFloat(button['letter-spacing']) / buttonSize) + theme.letterSpacing)}em`,
+    '--t-button-padding': button.padding.split(' ').map(value => pxScale(value, spaceRatio)).join(' '),
+    '--t-button-shadow': theme.shadow === baseline.shadow ? button['box-shadow'] : (theme.shadow === 0 ? 'none' : tokens['--shadow-s']),
+    '--t-button-gap': pxScale(button.gap, spaceRatio),
   };
+  for (const role of ROLES) {
+    aliases[`--t-font-${role}`] = tokens[`--font-${role}`];
+    for (const weight of ['regular', 'medium', 'heavy']) aliases[`--t-weight-${role}-${weight}`] = tokens[`--weight-${role}-${weight}`];
+  }
+  return { ...tokens, ...aliases };
 }
 
 const declarations = (variables) => Object.entries(variables).map(([key, value]) => `  ${key}: ${value};`).join('\n');
@@ -263,14 +380,15 @@ export function toCSS(input) {
   const theme = normalizeTheme(input);
   const light = declarations(themeVariables(theme, 'light'));
   const dark = declarations(themeVariables(theme, 'dark'));
-  return `/* Generated by Theming. Theme schema v1. No runtime dependency. */\n:root, [data-theme="light"] {\n  color-scheme: light;\n${light}\n}\n\n@media (prefers-color-scheme: dark) {\n  :root:not([data-theme="light"]) {\n    color-scheme: dark;\n${dark.replace(/^  /gm, '    ')}\n  }\n}\n\n[data-theme="dark"] {\n  color-scheme: dark;\n${dark}\n}\n\n@media (prefers-reduced-motion: reduce) {\n  :root, [data-theme] { --t-duration: 0ms; --t-easing: linear; }\n}\n\n${baseComponentCSS}\n\n${componentCSS(theme)}\n`;
+  return `/* Generated by Theming. Theme schema v1. No runtime dependency. */\n:root, [data-theme="light"] {\n  color-scheme: light;\n${light}\n}\n\n@media (prefers-color-scheme: dark) {\n  :root:not([data-theme="light"]) {\n    color-scheme: dark;\n${dark.replace(/^  /gm, '    ')}\n  }\n}\n\n[data-theme="dark"] {\n  color-scheme: dark;\n${dark}\n}\n\n@media (prefers-reduced-motion: reduce) {\n  :root, [data-theme] { --t-duration: 0ms; --t-easing: linear; --motion-duration: 0ms; --motion-large-duration: 0ms; --motion-enabled: 0; }\n}\n\n${baseComponentCSS}\n\n${componentCSS(theme)}\n`;
 }
 
 // These classes are intentionally useful without React; exported React wrappers only add semantics.
 const baseComponentCSS = `.theme-root { color: var(--t-text); background: var(--t-bg); font-family: var(--t-font); font-size: var(--t-font-size); line-height: var(--t-line-height); letter-spacing: var(--t-letter-spacing); }
 .theme-root *, .theme-root *::before, .theme-root *::after { box-sizing: border-box; }
 .t-button, .t-input, .t-select, .t-textarea { font: inherit; letter-spacing: inherit; border: var(--t-border-width) solid var(--t-border); border-radius: var(--t-radius-sm); min-height: var(--t-control-height); padding: calc(var(--t-space) * .5) calc(var(--t-space) * .8); transition: background-color var(--t-duration) var(--t-easing), border-color var(--t-duration) var(--t-easing), box-shadow var(--t-duration) var(--t-easing); }
-.t-button { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--t-space) * .45); background: var(--t-primary); color: var(--t-on-primary); border-color: transparent; font-weight: var(--t-font-weight); cursor: pointer; }
+.t-button { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--t-space) * .45); background: var(--t-primary); color: var(--t-on-primary); border-color: transparent; border-radius: var(--radius-s); font-family: var(--font-ui); font-size: var(--size-m); font-weight: var(--weight-ui-medium); line-height: var(--line-m); letter-spacing: var(--letter-spacing-m); padding: var(--space-s) var(--space-m); gap: var(--space-xs); cursor: pointer; }
+.t-button[data-size="showcase"] { background: var(--t-button-background); color: var(--t-button-color); border-radius: var(--t-button-radius); font-size: var(--t-button-font-size); font-weight: var(--t-button-font-weight); line-height: var(--t-button-line-height); letter-spacing: var(--t-button-letter-spacing); padding: var(--t-button-padding); gap: var(--t-button-gap); box-shadow: var(--t-button-shadow); }
 .t-button[data-variant="secondary"] { background: var(--t-surface); border-color: var(--t-border); color: var(--t-text); }
 .t-button[data-variant="ghost"] { background: transparent; color: var(--t-text); }
 .t-button:hover:not(:disabled) { box-shadow: var(--t-shadow); filter: brightness(.96); }

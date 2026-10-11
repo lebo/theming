@@ -3,9 +3,9 @@
 .preview{background:var(--t-bg)}
 .preview[data-icon-style=solid] .p-icon-sample svg{fill:currentColor;stroke-width:1}
 .preview .p-button,.preview .specimen-label,.preview .component-title{font-weight:var(--t-font-weight,550)}
-.preview[data-preset=frosted] .specimen{background:var(--t-glass);backdrop-filter:blur(var(--t-blur))}
 .preview .p-positive,.preview .p-alert{color:var(--t-accent-text)}
 .dock .mobile-inspector{display:none}
 @media(max-width:800px){.dock .mobile-inspector{display:grid}}
 @media(min-width:801px) and (max-width:1150px){.workspace{grid-template-columns:minmax(0,1fr) 340px}}
 .component-editor-caption{color:#8d8d8d;font-size:12px;margin:0 0 18px}.component-state-note{display:flex;align-items:flex-start;gap:12px;padding:16px;background:#222;border-radius:14px;color:#aaa}.component-state-note svg{flex-shrink:0;margin-top:3px}.component-state-note p{margin:0;font-size:12px;line-height:1.65}
+.font-status{margin:10px 0;font-size:11px;line-height:1.55;color:#8d9a7d}.font-status.font-missing{color:#c7b69a}.preset-update{padding:15px;background:#242923;border:1px solid #3b4930;border-radius:13px;margin-bottom:18px}.preset-update p{font-size:12px;line-height:1.6;margin:0 0 10px;color:#c4cebc}.preset-update small{font-size:10px;color:#939d8b;display:block;margin-top:10px}

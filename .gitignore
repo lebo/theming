@@ -6,3 +6,6 @@ dist/
 .vercel/
 coverage/
 *.zip
+fonts/licensed/
+fonts/**/*.woff
+fonts/**/*.woff2
