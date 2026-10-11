@@ -19,10 +19,14 @@ There are no Graphical source files, paid fonts, proprietary icon packs, account
 
 ## Verification
 
-- `npm test`: ten tests covering validated imports, light/dark palette overrides, derived character and icon effects, WCAG contrast calculations, typed design tokens, CSS mode export, and ZIP path/CRC/UTF-8 integrity.
+- `npm test`: fourteen tests covering validated imports, light/dark palette overrides, derived character and icon effects, WCAG contrast calculations, typed design tokens, CSS mode export, and ZIP path/CRC/UTF-8 integrity, and validated per-component state styling with matching preview/export rules.
 - `npm run check`: all application modules pass JavaScript syntax validation.
 - `npm run build`: produces a static dist directory without external dependencies.
-- Hosted browser checks: initial rendering, preset selection, dark appearance, component filtering, dialog open/close, export code preview, and console error review.
+- Hosted browser checks: initial rendering, preset selection, dark appearance, component filtering, dialog open/close, export code preview, console error review, 390px mobile inspector/modal behavior, manual hex editing, and share-link import with URL cleanup.
 - Fixed issues from review: share-link persistence, effective brand overrides, storage failure reporting, dialog cancellation, keyboard tabs, mobile focus containment and desktop-only inspector controls.
 
 Local preview hosting was unavailable in the execution environment (network sandbox rejected localhost listening). Browser checks use the Vercel deployment. ZIP contents and integrity are verified directly by tests; browser download-event automation was interrupted by its browser session transport.
+
+## REA execution
+
+The official rea-agents 6.4.0 analyzer was run successfully against three public JavaScript bundles, with no parse failures. See [the full report](rea-analysis.md) for the command, input hashes, findings and partial-coverage limits. Component state editing was added to the independent implementation after this pass; its rules are shared between preview CSS and exported CSS.

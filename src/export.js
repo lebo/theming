@@ -19,11 +19,24 @@ function designTokens(theme) {
       blur: dimension(theme.shadow ? Number((theme.shadow * 0.55 + 3).toFixed(3)) : 0), spread: dimension(theme.shadow ? -2 : 0),
     });
   }
+  const components = {};
+  for (const [component, states] of Object.entries(theme.componentStyles)) {
+    components[component] = {};
+    for (const [state, styles] of Object.entries(states)) {
+      components[component][state] = {};
+      for (const [property, value] of Object.entries(styles)) {
+        components[component][state][property] = property === 'radius'
+          ? token('dimension', dimension(value))
+          : token('color', color(value));
+      }
+    }
+  }
   const vars = themeVariables(theme);
   const easing = { snappy: [0.2, 0.8, 0.2, 1], gentle: [0.4, 0, 0.2, 1], bouncy: [0.34, 1.56, 0.64, 1], none: [0, 0, 1, 1] };
   return {
     $description: `Design tokens for ${theme.name}. DTCG 2025.10 format; light and dark are separate mode groups.`,
     ...modes,
+    ...(Object.keys(components).length ? { components } : {}),
     layout: {
       radius: token('dimension', dimension(theme.radius)),
       'radius-sm': token('dimension', dimension(parseFloat(vars['--t-radius-sm']))),
@@ -77,13 +90,21 @@ This is a portable, original theme created with Theming. Use this guide as proje
 - Icons: ${theme.iconStyle}, stroke ${theme.iconStroke}. The supplied wrappers have no icon-library dependency; apply stroke width to your existing icon library.
 - Motion: ${theme.motion}, effective duration ${variables['--t-duration']}. Reduced-motion preferences always override this.
 
+## Component styles
+
+Optional \`componentStyles\` overrides individual components independently of the global theme. Supported component keys are \`button\`, \`input\`, \`select\`, \`textarea\`, \`switch\`, and \`card\`. Each accepts \`base\`, \`hover\`, \`active\`, \`focus\`, and \`disabled\` state objects. Allowed properties are \`background\`, \`color\`, and \`borderColor\` (hex colors) plus \`radius\` (0–48 pixels).
+
+These overrides apply to both appearances and every button variant. The base state remains active underneath interaction states. Hover and active exclude disabled controls; focus uses the native focus-visible state. Card disabled styling uses aria-disabled="true". Exported CSS contains ordinary interaction selectors and no forced preview states. In the editor, componentCSS(theme, { preview: true }) also emits forced-state rules activated by data-forced-component and data-forced-state on the .preview container. Optional forceComponent and forceState arguments limit those editor rules. The actual control remains interactive; forcing a visual disabled state does not disable its behavior.
+
+The JSON configuration preserves all overrides, CSS applies them to the supplied native components, and design tokens include a components group with typed per-state values. Clear a property or state to inherit the global theme again. Custom component colors can change text contrast; check foreground/background pairs after editing.
+
 ## Rules for changes
 
 \`theme.json\` is the editable source configuration, using schema version 1. Reimport it into Theming to change settings and regenerate the package. \`tokens.json\` follows the Design Tokens Community Group 2025.10 format. It keeps light and dark colors in separate groups; it is not a resolver or framework configuration.
 
 Changes to airiness multiply the spacing scale: 16 × (spacing / 100) × (0.74 + airiness × 0.004). Control height is 32px plus half that resulting unit. Boldness changes emphasis font weight (450–700 in 50-point steps) and subtly increases border contrast above 50. Radius, border width, and shadow remain independent controls. Frosted adds surface translucency and backdrop blur. A primary or brand background always uses the higher-contrast black or white text; brand-colored text is separately adjusted to a minimum 4.5:1 contrast on the surface.
 
-Optional \`colors.light\` and \`colors.dark\` contain per-appearance hex overrides for bg, surface, surfaceAlt, text, muted, border, and brand. Overrides are preserved exactly; changing a global neutral family or brand does not erase them. Clear an override to return to the derived value. An explicit border override is not modified by boldness. Check contrast after manually overriding text or surfaces.\n\nUse \`--t-bg\` for the page, \`--t-surface\` for cards, \`--t-surface-alt\` for inset regions, \`--t-text\` and \`--t-muted\` for content, and \`--t-primary\` / \`--t-on-primary\` together for calls to action. Use \`--t-accent-text\` for branded text, not the raw brand color. Use \`--t-glass\` for surfaces that should respect Frosted translucency.
+Optional \`colors.light\` and \`colors.dark\` contain per-appearance hex overrides for bg, surface, surfaceAlt, text, muted, border, and brand. Overrides are preserved exactly. The editor’s quick brand-color control replaces the global brand and clears mode-specific brand overrides; other overrides remain unchanged. Clear an override to return to the derived value. An explicit border override is not modified by boldness. Check contrast after manually overriding text or surfaces.\n\nUse \`--t-bg\` for the page, \`--t-surface\` for cards, \`--t-surface-alt\` for inset regions, \`--t-text\` and \`--t-muted\` for content, and \`--t-primary\` / \`--t-on-primary\` together for calls to action. Use \`--t-accent-text\` for branded text, not the raw brand color. Use \`--t-glass\` for surfaces that should respect Frosted translucency.
 
 Preserve native element semantics and focus rings. Give every input a visible label. Icon-only buttons require an accessible name. Avoid color as the only status signal. Never remove reduced-motion handling. No hosted service, API, authentication, or font download is included in this export.
 `,
@@ -229,7 +250,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, Omit<React.InputHTMLA
   return <input {...props} ref={ref} type="checkbox" className={classes('t-checkbox', className)} />;
 });
 export const Switch = React.forwardRef<HTMLInputElement, Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'role'>>(function Switch({ className, ...props }, ref) {
-  return <input {...props} ref={ref} type="checkbox" role="switch" className={classes('t-checkbox', className)} />;
+  return <input {...props} ref={ref} type="checkbox" role="switch" className={classes('t-switch', className)} />;
 });
 
 type DialogProps = React.DialogHTMLAttributes<HTMLDialogElement> & { label: string };

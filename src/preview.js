@@ -53,7 +53,11 @@ function componentGallery(filter) {
   ];
   const matching = examples.filter(([name]) => name.toLowerCase().includes(filter.toLowerCase().trim()));
   if (!matching.length) return `<div class="preview-empty">${i('search', 30)}<h3>No components found</h3><p>Try a different search.</p></div>`;
-  return `<div class="component-specimens">${matching.map(([name, content]) => tile(name, `<h3 class="component-title">${name}</h3><div class="component-body">${content}</div>`, 'component-specimen')).join('')}</div>`;
+  const editable = { Button: 'button', Input: 'input', Select: 'select', 'Text area': 'textarea', Switch: 'switch' };
+  return `<div class="component-specimens">${matching.map(([name, content]) => {
+    const edit = editable[name] ? `<button type="button" class="p-icon-button component-edit" data-edit-component="${editable[name]}" aria-label="Customize ${name}" title="Customize ${name}">${i('pen', 14)}</button>` : '';
+    return tile(name, `<div class="component-heading"><h3 class="component-title">${name}</h3>${edit}</div><div class="component-body">${content}</div>`, 'component-specimen');
+  }).join('')}</div>`;
 }
 
 export function renderPreview({ tab = 'theme', theme = {}, filter = '' } = {}) {
@@ -62,7 +66,7 @@ export function renderPreview({ tab = 'theme', theme = {}, filter = '' } = {}) {
 
 const bindings = new WeakMap();
 
-export function bindPreview(container, { notify = () => {} } = {}) {
+export function bindPreview(container, { notify = () => {}, onSelectComponent = () => {} } = {}) {
   bindings.get(container)?.abort();
   const controller = new AbortController();
   bindings.set(container, controller);
@@ -101,6 +105,11 @@ export function bindPreview(container, { notify = () => {} } = {}) {
   container.addEventListener('click', (event) => {
     const button = event.target.closest('button');
     if (!button) return;
+    if (button.dataset.editComponent) {
+      event.preventDefault();
+      onSelectComponent(button.dataset.editComponent);
+      return;
+    }
     if (button.dataset.step) {
       const input = button.closest('.p-number-field').querySelector('input');
       input.value = Math.min(Number(input.max || 99), Math.max(Number(input.min || 0), Number(input.value) + Number(button.dataset.step)));

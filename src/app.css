@@ -7,3 +7,5 @@
 .preview .p-positive,.preview .p-alert{color:var(--t-accent-text)}
 .dock .mobile-inspector{display:none}
 @media(max-width:800px){.dock .mobile-inspector{display:grid}}
+@media(min-width:801px) and (max-width:1150px){.workspace{grid-template-columns:minmax(0,1fr) 340px}}
+.component-editor-caption{color:#8d8d8d;font-size:12px;margin:0 0 18px}.component-state-note{display:flex;align-items:flex-start;gap:12px;padding:16px;background:#222;border-radius:14px;color:#aaa}.component-state-note svg{flex-shrink:0;margin-top:3px}.component-state-note p{margin:0;font-size:12px;line-height:1.65}

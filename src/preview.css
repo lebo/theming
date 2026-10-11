@@ -122,6 +122,11 @@
 .preview .p-tag-neutral{color:var(--t-muted);background:var(--t-surface-alt)}.preview .p-tag-outline{color:var(--t-text);background:none;border-color:var(--t-border)}
 .preview .component-specimens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--p-gap)}
 .preview .component-title{font-size:.86em;font-weight:600;margin:0 0 23px;letter-spacing:-.02em}
+.preview .component-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px;margin:0 0 23px}
+.preview .component-heading>.component-title{margin:0}
+.preview .component-edit{width:24px;height:24px;padding:4px;flex-shrink:0;opacity:.65}
+.preview .component-edit:hover,.preview .component-edit:focus-visible{opacity:1;color:var(--t-brand)}
+.preview[data-inspect-component=button] .component-specimen[data-specimen=button],.preview[data-inspect-component=input] .component-specimen[data-specimen=input],.preview[data-inspect-component=select] .component-specimen[data-specimen=select],.preview[data-inspect-component=textarea] .component-specimen[data-specimen="text area"],.preview[data-inspect-component=switch] .component-specimen[data-specimen=switch]{outline:2px solid var(--t-brand);outline-offset:-2px}
 .preview .component-specimen .p-field:first-of-type{margin-top:0}.preview .component-specimen .p-tags{margin-top:0}
 .preview .component-specimen{display:flex;flex-direction:column;padding:24px;min-height:250px;margin:0}
 .preview .component-body{display:flex;flex:1;flex-direction:column;justify-content:center;min-width:0}
@@ -171,3 +176,4 @@
 @media(max-width:850px){.preview .theme-specimens{columns:1}.preview .component-specimens{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){.preview .component-specimens{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.preview *{transition:none!important}}
+@container preview-area (max-width:640px){.preview .theme-specimens{columns:1}}

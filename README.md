@@ -29,6 +29,7 @@ Serve `dist/` with any static host. A Vercel configuration is included.
 - Typography family, text size, weight character, line height, letter spacing.
 - Spacing scale, corner radius, border width, shadow depth, icon treatment and stroke width.
 - Motion easing and duration with reduced-motion preference support.
+- Direct state styling for buttons, inputs, selects, text areas and switches: default, hover, pressed, focus and disabled, with CSS export.
 - Interactive preview gallery and 24 searchable native component specimens.
 - Undo/redo, browser-local autosave, named theme collection, JSON import and self-contained share URLs.
 - Export a complete ZIP containing CSS, configuration JSON, typed DTCG design tokens, original React primitives, a React provider, setup instructions and an agent guide.
@@ -53,4 +54,4 @@ The editor itself uses browser ES modules and native controls. Generated React f
 
 This is an independent local-first reconstruction of the demo's editing experience. Graphical's paid/private editor, its downloadable Base UI source, licensed fonts/icons, shadcn registry, account service and unpublished behavior were not accessed or reproduced. The exported React components here use native HTML semantics; they are not Base UI wrappers. No production payment, email or team API is connected to the sample specimens.
 
-See `docs/reconstruction.md` for observations and verification notes.
+See `docs/rea-analysis.md` for the actual REA analysis and `docs/reconstruction.md` for observations and verification notes.

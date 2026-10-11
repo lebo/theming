@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PRESETS, defaultTheme, normalizeTheme, themeVariables, toCSS, contrastRatio, readableText } from '../src/theme.js';
+import { PRESETS, defaultTheme, normalizeTheme, themeVariables, toCSS, componentCSS, contrastRatio, readableText } from '../src/theme.js';
 import { createExportFiles, createZip } from '../src/export.js';
 
 test('configuration JSON roundtrips without losing per-mode overrides or changing input', () => {
@@ -161,4 +161,75 @@ test('ZIP rejects traversal paths and unsupported payloads', () => {
   for (const files of [{ '../secret': 'x' }, { '/absolute': 'x' }, { 'bad\\path': 'x' }, { 'a/../bad': 'x' }, { 'null\0name': 'x' }, { 'a.txt': new Uint8Array(2) }]) {
     assert.throws(() => createZip(files), TypeError);
   }
+});
+
+
+test('component overrides validate each level, normalize colors, and clamp radius without mutating input', () => {
+  const componentStyles = { button: { base: { background: '#ABC', radius: 75 }, hover: { color: '#fff' } }, card: { disabled: { borderColor: '#000' } } };
+  const original = JSON.stringify(componentStyles);
+  const normalized = normalizeTheme({ componentStyles });
+  assert.equal(JSON.stringify(componentStyles), original);
+  assert.equal(normalized.componentStyles.button.base.background, '#aabbcc');
+  assert.equal(normalized.componentStyles.button.base.radius, 48);
+  normalized.componentStyles.button.base.radius = 12;
+  assert.equal(componentStyles.button.base.radius, 75);
+  assert.deepEqual(normalizeTheme({}).componentStyles, {});
+  for (const bad of [null, [], 'x', { 'button, body': {} }, { button: null }, { button: { 'hover} body': {} } }, { button: { base: null } }, { button: { base: { boxShadow: '#fff' } } }, { input: { focus: { background: 'url(https://evil.test)' } } }, { card: { base: { radius: '10' } } }, { card: { base: { radius: Infinity } } }, JSON.parse('{"__proto__":{"base":{"color":"#000"}}}')]) {
+    assert.throws(() => normalizeTheme({ componentStyles: bad }), TypeError);
+  }
+});
+
+test('component preview and exported CSS preserve matching overrides across native states', () => {
+  const theme = normalizeTheme({ componentStyles: {
+    button: { hover: { background: '#ff0000' }, base: { color: '#ffffff', radius: 8 }, disabled: { background: '#555555' } },
+    input: { focus: { borderColor: '#0000ff' } },
+    select: { active: { background: '#ffffff' } },
+    textarea: { base: { radius: 2 } },
+    switch: { hover: { background: '#ff00ff' } },
+    card: { disabled: { borderColor: '#777777' } },
+  } });
+  const preview = componentCSS(theme, { preview: true });
+  const exported = componentCSS(theme);
+  assert.ok(preview.includes('.preview .p-button:hover:not(:disabled)'));
+  assert.ok(exported.includes('.t-button:hover:not(:disabled)'));
+  assert.ok(exported.includes('.t-button[data-variant]'));
+  assert.ok(preview.includes('.preview input.p-input:focus-visible'));
+  assert.ok(preview.includes('.preview select.p-input:active:not(:disabled)'));
+  assert.ok(preview.includes('.preview textarea.p-input'));
+  assert.ok(preview.includes('.preview .p-switch:hover:not(:disabled)'));
+  assert.ok(exported.includes('.t-card:is(:disabled, [aria-disabled="true"])'));
+  for (const value of ['background: #ff0000;', 'color: #ffffff;', 'border-radius: 8px;', 'border-color: #0000ff;', 'border-radius: 2px;', 'background: #ff00ff;']) {
+    assert.ok(preview.includes(value), value);
+    assert.ok(exported.includes(value), value);
+  }
+  assert.ok(preview.indexOf('.preview .p-button {') < preview.indexOf('.preview .p-button:hover'));
+  assert.ok(toCSS(theme).endsWith(exported + '\n'));
+  assert.ok(preview.includes('.preview[data-forced-component="button"][data-forced-state="hover"] .p-button'));
+  assert.ok(!exported.includes('data-forced'));
+  assert.ok(!exported.includes('.preview'));
+});
+
+test('forced component state options are allowlisted and cannot inject selectors', () => {
+  const theme = { componentStyles: { button: { hover: { background: '#ff0000' }, active: { background: '#000000' } } } };
+  const forced = componentCSS(theme, { preview: true, forceComponent: 'button', forceState: 'hover' });
+  assert.ok(forced.includes('[data-forced-state="hover"]'));
+  assert.ok(!forced.includes('[data-forced-state="active"]'));
+  assert.ok(forced.includes('.p-button:active:not(:disabled)'));
+  for (const options of [{ preview: 'yes' }, { forceComponent: 'button' }, { forceState: 'hover' }, { preview: true, forceComponent: 'button"] body', forceState: 'hover' }, { preview: true, forceComponent: 'button', forceState: 'hover"] body' }]) {
+    assert.throws(() => componentCSS(theme, options), TypeError);
+  }
+});
+
+test('component styles survive JSON and ZIP export and have typed design tokens', () => {
+  const theme = normalizeTheme({ componentStyles: { button: { base: { radius: 12 }, hover: { background: '#abcdef' } } } });
+  const files = createExportFiles(theme);
+  assert.deepEqual(JSON.parse(files['theme.json']).componentStyles, theme.componentStyles);
+  assert.deepEqual(readZip(createZip(files)), files);
+  const tokens = JSON.parse(files['tokens.json']);
+  assert.deepEqual(tokens.components.button.base.radius, { $type: 'dimension', $value: { value: 12, unit: 'px' } });
+  assert.equal(tokens.components.button.hover.background.$type, 'color');
+  assert.ok(files['theme.css'].includes('.t-button:hover:not(:disabled)'));
+  assert.ok(files['GUI.md'].includes('componentStyles'));
+  assert.ok(files['GUI.md'].includes('forceComponent'));
+  assert.ok(files['components.tsx'].includes("classes('t-switch', className)"), 'preserve native switch styling');
 });
