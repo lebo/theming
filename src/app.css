@@ -5,3 +5,5 @@
 .preview .p-button,.preview .specimen-label,.preview .component-title{font-weight:var(--t-font-weight,550)}
 .preview[data-preset=frosted] .specimen{background:var(--t-glass);backdrop-filter:blur(var(--t-blur))}
 .preview .p-positive,.preview .p-alert{color:var(--t-accent-text)}
+.dock .mobile-inspector{display:none}
+@media(max-width:800px){.dock .mobile-inspector{display:grid}}
