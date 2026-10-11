@@ -1,5 +1,6 @@
 /** Original, dependency-free theme model. All derived styles originate here. */
 import { REFERENCE_TOKENS, FREE_FONT_OVERRIDES, REFERENCE_COMPONENTS } from './reference-tokens.js';
+import { palettesForPreset } from './palettes.js';
 
 const BASE = {
   version: 1, baselineVersion: 2, name: 'Felt', preset: 'felt', mode: 'light',
@@ -75,6 +76,12 @@ export function normalizeTheme(input) {
     result.name = input.name.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 64) || BASE.name;
   }
   if (input.brand !== undefined) result.brand = parseHex(input.brand).hex;
+  if (input.palette !== undefined) {
+    if (typeof input.palette !== 'string' || (input.palette !== '' && !palettesForPreset(result.preset).some(palette => palette.id === input.palette))) {
+      throw new TypeError('Palette must be an available palette ID for this preset, or empty for custom colors.');
+    }
+    result.palette = input.palette;
+  }
   if (input.colors !== undefined) {
     const overrides = input.colors;
     if (overrides === null || typeof overrides !== 'object' || Array.isArray(overrides)) throw new TypeError('Color overrides must be an object with light and dark palettes.');
@@ -116,6 +123,11 @@ export function normalizeTheme(input) {
     result[key] = round(clamp(input[key], lo, hi));
   }
   return result;
+}
+
+/** The reference wheel order, with separate light/dark four-color palettes. */
+export function themePalettes(input = {}) {
+  return palettesForPreset(normalizeTheme(input).preset);
 }
 
 function parseHex(color, allowAlpha = false) {
@@ -297,7 +309,12 @@ export function themeVariables(input, mode) {
     if (overrides[override]) replacements[captured[tokenName].toLowerCase()] = overrides[override];
   }
   const neutralReplacements = { ...replacements };
-  const changedBrand = overrides.brand ?? (theme.brand.toLowerCase() !== baseline.brand.toLowerCase() ? theme.brand : null);
+  const selectedPalette = theme.palette ? palettesForPreset(id).find(palette => palette.id === theme.palette) : null;
+  const selectedColors = selectedPalette?.colors[appearance];
+  if (selectedColors) for (let i = 1; i <= 4; i++) replacements[captured[`--color-${i}`].toLowerCase()] = selectedColors[i - 1];
+  // A selected palette owns both appearance variants; the UI's stored light
+  // brand value must not replace its independently authored dark color.
+  const changedBrand = overrides.brand ?? selectedColors?.[0] ?? (theme.brand.toLowerCase() !== baseline.brand.toLowerCase() ? theme.brand : null);
   if (changedBrand) replacements[captured['--color-1'].toLowerCase()] = changedBrand;
   if (Object.keys(replacements).length) remapHexColors(tokens, replacements);
   // Token roles remain independent even when a preset shares a hex between brand and text.
@@ -308,9 +325,9 @@ export function themeVariables(input, mode) {
     tokens[`--neutral-${i}-transparent`] = resolved === original ? captured[`--neutral-${i}-transparent`] : transparentHex(resolved);
   }
   for (let i = 1; i <= 4; i++) {
-    const resolved = i === 1 && changedBrand ? changedBrand : captured[`--color-${i}`];
+    const resolved = i === 1 && changedBrand ? changedBrand : (selectedColors?.[i - 1] ?? captured[`--color-${i}`]);
     tokens[`--color-${i}`] = resolved;
-    tokens[`--color-${i}-transparent`] = i === 1 && changedBrand ? transparentHex(resolved) : captured[`--color-${i}-transparent`];
+    tokens[`--color-${i}-transparent`] = selectedColors || i === 1 && changedBrand ? transparentHex(resolved) : captured[`--color-${i}-transparent`];
   }
   for (const key of ['--cte-canvas', '--cte-surface', '--cte-surface-muted', '--cte-text', '--cte-text-muted']) {
     tokens[key] = neutralReplacements[captured[key].toLowerCase()] ?? captured[key];
@@ -324,6 +341,18 @@ export function themeVariables(input, mode) {
   if (changedBrand) {
     tokens['--cte-accent'] = tokens['--cte-focus'] = tokens['--color-1'] = changedBrand;
     tokens['--cte-accent-text'] = readableText(changedBrand);
+  }
+  if (selectedPalette && !overrides.brand) {
+    const foregroundRole = selectedPalette.primaryForeground?.[appearance];
+    const foreground = foregroundRole ? tokens[`--${foregroundRole}`] : readableText(tokens['--color-1']);
+    tokens['--cte-accent-text'] = foreground;
+    for (const [background, foregroundToken] of [
+      ['--option-badge-background', '--option-badge-foreground'],
+      ['--navigation-active-background', '--navigation-active-foreground'],
+      ['--emphasis-type-background', '--emphasis-type-foreground'],
+    ]) {
+      if (captured[background]?.toLowerCase() === captured['--color-1'].toLowerCase()) tokens[foregroundToken] = foreground;
+    }
   }
 
   const typeRatio = theme.fontSize / baseline.fontSize;
@@ -441,7 +470,7 @@ const baseComponentCSS = `.theme-root { color: var(--t-text); background: var(--
 
 const PREVIEW_COMPONENT_SELECTORS = {
   button: ['.p-button'], input: ['input.p-input'], select: ['select.p-input'],
-  textarea: ['textarea.p-input'], switch: ['.p-switch'], card: ['.specimen'],
+  textarea: ['textarea.p-input'], switch: ['.p-switch'], card: ['.specimen', '.so-card'],
 };
 const EXPORT_COMPONENT_SELECTORS = {
   // Include the variant selector so base overrides apply to secondary and ghost buttons, too.
@@ -456,7 +485,9 @@ const COMPONENT_CSS_PROPERTIES = { background: 'background', color: 'color', bor
 
 /**
  * CSS for custom component appearances, separate from the global token layer.
- * Forced states are editor-only: set both data-forced-* attributes on .preview.
+ * Preview overrides target the editor's #preview root so saved styles outrank
+ * the theme-specific gallery rules after component inspection ends.
+ * Forced states are editor-only: set both data-forced-* attributes on #preview.
  * The optional force pair limits those attribute rules; normal interaction rules always remain.
  */
 export function componentCSS(input, { preview = false, forceComponent = null, forceState = null } = {}) {
@@ -480,10 +511,10 @@ export function componentCSS(input, { preview = false, forceComponent = null, fo
       }).join('\n');
       let suffix = STATE_SUFFIXES[state];
       if (state === 'disabled' && component === 'card') suffix = ':is(:disabled, [aria-disabled="true"])';
-      const nativeSelectors = selectors.map(selector => `${preview ? '.preview ' : ''}${selector}${suffix}`);
+      const nativeSelectors = selectors.map(selector => `${preview ? '#preview ' : ''}${selector}${suffix}`);
       rules.push(`${nativeSelectors.join(',\n')} {\n${body}\n}`);
       if (preview && (forceComponent === null || (forceComponent === component && forceState === state))) {
-        const scope = `.preview[data-forced-component="${component}"][data-forced-state="${state}"]`;
+        const scope = `#preview[data-forced-component="${component}"][data-forced-state="${state}"]`;
         forcedRules.push(`${selectors.map(selector => `${scope} ${selector}`).join(',\n')} {\n${body}\n}`);
       }
     }

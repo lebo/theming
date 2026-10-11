@@ -25,6 +25,14 @@ All **1,930 exposed CSS token values** across six presets and both modes are pre
 
 Token equality does not guarantee equal layout or typography. Effective `--t-font-*` aliases add the fallback chains below while the raw `--font-*` values remain unchanged.
 
+## Color wheels
+
+`src/palettes.js` preserves the recovered palette order, names, all four colors in each appearance and supplied primary foreground roles. Coverage is **108 theme-scoped palette entries**: 25 each for Felt, Jelly and Base, 7 for Canvas, and 13 each for Paper and Alloy. Felt/Jelly/Base share many palette IDs but retain their own captured data. Canvas, Paper and Alloy have separately authored dark colors.
+
+Selecting a palette changes all four colors, alpha variants and color-dependent emphasis roles. Foreground roles resolve against the current neutral palette; explicit user color overrides take priority. Optional `theme.palette` IDs are validated per preset and persist through configuration, share links and exports. Clearing the selection returns to custom-color behavior. Baselines without a selection retain the original token tables.
+
+`tests/palettes.test.js` verifies independent hashes of all six ordered arrays, every palette in both modes, foreground selection, role propagation, override precedence and configuration/CSS/typed-token roundtrips.
+
 ## Font behavior
 
 | Theme | Preferred reference faces | Effective fallback when unavailable |
@@ -38,7 +46,7 @@ Token equality does not guarantee equal layout or typography. Effective `--t-fon
 
 `Sidebar Inter`, `Sidebar Geist` and `Sidebar Geist Mono` retain the reference CSS aliases. The actual bundled versions are **Inter 4.001, Geist 1.800, Geist Mono 1.401, Open Runde 1.001 and LT Superior Serif 2.120**. Twelve OFL files are SHA-256 pinned; builds reject changed downloads. Their license notices are in `fonts/licenses/`.
 
-The inspector reports unavailable preferred faces and the loaded fallback family. It loads all required role weights. Selecting **Free** uses the observed alternatives; Felt requests Timeless and falls back to Inter until Timeless is supplied. No fallback is presented as an exact font match.
+The inspector reports unavailable preferred faces and names any loaded fallback family. The font loader checks all required role weights and loads the bundled fallback faces. Selecting **Free** uses the observed alternatives; Felt requests Timeless and falls back to Inter until Timeless is supplied. No fallback is presented as an exact font match.
 
 Use **Typography → Add font files** with authorized files and the original filenames from `src/font-manifest.js` or an exported `FONT_SETUP.md`. These files load locally, persist in browser IndexedDB and enter explicitly downloaded kits. They are not uploaded or included in share URLs. Private deployments can use ignored `fonts/licensed/...` paths or `THEMING_LICENSED_FONT_BASE_URL`. GT and Timeless files are not distributed by this repository.
 
@@ -50,7 +58,7 @@ Existing version-one themes retain their settings. **Apply updated preset** firs
 
 ## Verification limits
 
-The automated suite covers tokens, overview composition, fallback loading/bundling, theme roundtrips and binary ZIP integrity. The current overview and editor shell need visual comparison at each tested viewport; prior checks of the replaced gallery do not validate these layouts. Font metrics differ when a preferred face is unavailable. SVG icon drawings, native control internals, animations and non-default character/color interpolation remain independent implementations. The result is not described as pixel-perfect.
+The automated suite covers tokens, exact palette data, overview composition, fallback loading/bundling, theme roundtrips and binary ZIP integrity. The current overview and editor shell need visual comparison at each tested viewport; prior checks of the replaced gallery do not validate these layouts. Font metrics differ when a preferred face is unavailable. SVG icon drawings, native control internals, animations and non-default character/color interpolation remain independent implementations. The result is not described as pixel-perfect.
 
 ## Evidence
 

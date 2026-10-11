@@ -25,7 +25,7 @@ Run `npm run fonts` before local development or building so the exact OFL fonts 
 
 - Six captured presets: Felt, Canvas, Jelly, Paper, Alloy and Base. All 1,930 exposed token values match the observed light/dark baselines.
 - Two-axis character control: quiet to bold, compact to airy. Keyboard-operable sliders are available by tabbing into the control.
-- Brand hue and custom hex color, reference Mono/Warm palettes and additional neutral families, brand/neutral primary actions.
+- Exact ordered color wheels: 25 palettes each for Felt/Jelly/Base, 7 for Canvas, and 13 each for Paper/Alloy. Each palette supplies four authored colors in both appearances, with custom hex overrides, neutral families and brand/neutral primary actions.
 - Light and dark appearance with independent semantic color overrides.
 - Exact UI, brand, editorial and data font roles, weight tiers, type/line/tracking scales; reference and free font choices.
 - Spacing scale, corner radius, border width, shadow depth, icon treatment and stroke width.
@@ -42,6 +42,7 @@ The editor works without an account or backend. Theme editing works offline once
 | File | Responsibility |
 | --- | --- |
 | `src/reference-tokens.js` | Exact public baseline values, free font roles and measured component samples |
+| `src/palettes.js` | Ordered per-theme color wheels and authored light/dark palette data |
 | `src/font-manifest.js` | Pinned OFL asset hashes and optional licensed font metadata |
 | `src/fonts.js` | Font availability, private browser font storage and ZIP font collection |
 | `src/theme.js` | Validated versioned theme model, presets, color/contrast utilities, semantic CSS variables |
@@ -54,7 +55,7 @@ The editor works without an account or backend. Theme editing works offline once
 | `src/app.css` | Editor shell and responsive inspector |
 | `src/preview.css` | Token-driven specimen styling |
 
-The editor itself uses browser ES modules and native controls. Generated React files are independent exports; React is not an editor dependency. OFL fonts are fetched at build time in their measured versions, with license texts under `fonts/licenses`. Missing GT or Timeless faces fall back to the closest bundled family: Inter, Geist, Open Runde or LT Superior Serif. The inspector identifies unavailable preferred faces; fallback rendering is not an exact typography match.
+The editor itself uses browser ES modules and native controls. Generated React files are independent exports; React is not an editor dependency. OFL fonts are fetched at build time in their measured versions, with license texts under `fonts/licenses`. Missing GT or Timeless faces fall back to the closest bundled family: Inter, Geist, Open Runde or LT Superior Serif. The inspector identifies unavailable preferred faces. Fallback font metrics and original control/icon implementations mean the result is not a pixel-perfect match.
 
 Use **Add font files** with authorized files using the original filenames; these stay in browser IndexedDB and are included only when you download a kit. They are not sent to a backend or included in share links. Alternatively, place authorized webfonts under the ignored `fonts/licensed/` paths before a private deployment, or set `THEMING_LICENSED_FONT_BASE_URL` to a root that contains those paths. ZIP exports include all bundled fallback families used by the theme, their weights and licenses, plus matching files added in this browser.
 

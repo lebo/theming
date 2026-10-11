@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { REFERENCE_TOKENS, FREE_FONT_OVERRIDES } from '../src/reference-tokens.js';
 import { PRESETS, defaultTheme, normalizeTheme, themeVariables, toCSS, componentCSS, contrastRatio, readableText, themeTypography, parseCSSColor, colorToHex } from '../src/theme.js';
 import { createExportFiles, createZip } from '../src/export.js';
@@ -192,23 +193,23 @@ test('component preview and exported CSS preserve matching overrides across nati
   } });
   const preview = componentCSS(theme, { preview: true });
   const exported = componentCSS(theme);
-  assert.ok(preview.includes('.preview .p-button:hover:not(:disabled)'));
+  assert.ok(preview.includes('#preview .p-button:hover:not(:disabled)'));
   assert.ok(exported.includes('.t-button:hover:not(:disabled)'));
   assert.ok(exported.includes('.t-button[data-variant]'));
-  assert.ok(preview.includes('.preview input.p-input:focus-visible'));
-  assert.ok(preview.includes('.preview select.p-input:active:not(:disabled)'));
-  assert.ok(preview.includes('.preview textarea.p-input'));
-  assert.ok(preview.includes('.preview .p-switch:hover:not(:disabled)'));
+  assert.ok(preview.includes('#preview input.p-input:focus-visible'));
+  assert.ok(preview.includes('#preview select.p-input:active:not(:disabled)'));
+  assert.ok(preview.includes('#preview textarea.p-input'));
+  assert.ok(preview.includes('#preview .p-switch:hover:not(:disabled)'));
   assert.ok(exported.includes('.t-card:is(:disabled, [aria-disabled="true"])'));
   for (const value of ['background: #ff0000;', 'color: #ffffff;', 'border-radius: 8px;', 'border-color: #0000ff;', 'border-radius: 2px;', 'background: #ff00ff;']) {
     assert.ok(preview.includes(value), value);
     assert.ok(exported.includes(value), value);
   }
-  assert.ok(preview.indexOf('.preview .p-button {') < preview.indexOf('.preview .p-button:hover'));
+  assert.ok(preview.indexOf('#preview .p-button {') < preview.indexOf('#preview .p-button:hover'));
   assert.ok(toCSS(theme).endsWith(exported + '\n'));
-  assert.ok(preview.includes('.preview[data-forced-component="button"][data-forced-state="hover"] .p-button'));
+  assert.ok(preview.includes('#preview[data-forced-component="button"][data-forced-state="hover"] .p-button'));
   assert.ok(!exported.includes('data-forced'));
-  assert.ok(!exported.includes('.preview'));
+  assert.ok(!exported.includes('#preview'));
 });
 
 test('forced component state options are allowlisted and cannot inject selectors', () => {
@@ -220,6 +221,45 @@ test('forced component state options are allowlisted and cannot inject selectors
   for (const options of [{ preview: 'yes' }, { forceComponent: 'button' }, { forceState: 'hover' }, { preview: true, forceComponent: 'button"] body', forceState: 'hover' }, { preview: true, forceComponent: 'button', forceState: 'hover"] body' }]) {
     assert.throws(() => componentCSS(theme, options), TypeError);
   }
+});
+
+test('saved component overrides outrank both overview stylesheets without forcing an inspected state', () => {
+  const theme = normalizeTheme({ componentStyles: {
+    button: { base: { background: '#123456', radius: 3 }, hover: { background: '#abcdef' } },
+    input: { base: { radius: 5 } },
+    switch: { base: { background: '#234567' } },
+    card: { base: { radius: 7 } },
+  } });
+  const css = componentCSS(theme, { preview: true, forceComponent: null, forceState: null });
+  for (const [selector, declaration] of [
+    ['#preview .p-button', 'background: #123456;'],
+    ['#preview .p-button:hover:not(:disabled)', 'background: #abcdef;'],
+    ['#preview input.p-input', 'border-radius: 5px;'],
+    ['#preview .p-switch', 'background: #234567;'],
+    ['#preview .so-card', 'border-radius: 7px;'],
+  ]) {
+    const rule = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(([, selectors]) => selectors.trim().split(',\n').includes(selector));
+    assert.ok(rule, `native rule remains after deselection: ${selector}`);
+    assert.ok(rule[2].includes(declaration), selector);
+  }
+
+  // One ID outranks any number of classes, attributes and pseudo-classes.
+  // Check the actual competing gallery rules so a future scope change cannot
+  // quietly undo saved button variants, standard inputs/switches or card styles.
+  let competingRules = 0;
+  for (const filename of ['overview.css', 'overview-special.css']) {
+    const source = readFileSync(new URL(`../src/${filename}`, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const [, selector, body] of source.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (!/\.(?:sp-button|so-button|so-input|so-switch|sp-shipping-option|sp-tile|so-card)\b/.test(selector)) continue;
+      if (!/(?:background|color|border-radius)\s*:/.test(body)) continue;
+      competingRules++;
+      assert.ok(!/#[\w-]+/.test(selector), `gallery selector now competes with the override ID: ${selector.trim()}`);
+      assert.ok(!/!important/.test(body), `gallery rule bypasses override specificity: ${selector.trim()}`);
+    }
+  }
+  assert.ok(competingRules > 10, 'examined real rules from both galleries');
+  assert.ok(!css.includes('!important'));
+  assert.ok(!componentCSS(theme).includes('#preview'), 'exported components retain portable class selectors');
 });
 
 test('component styles survive JSON and ZIP export and have typed design tokens', () => {

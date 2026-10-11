@@ -46,10 +46,10 @@ function canvas(theme) {
   const latency = tile('Request latency', surface(`<header class="sp-row"><strong>Request latency</strong><small>p95 · 1h</small></header><div class="sp-latency-number">48<span>ms</span><small>↓ 12.4%</small></div><svg class="sp-latency-chart" viewBox="0 0 360 96" aria-label="Request latency decreased over the last hour"><path class="sp-chart-grid" d="M0 10H330M0 43H330M0 76H330"/><path class="sp-chart-area" d="M0 68 13 70 23 64 34 68 48 18 55 62 68 70 79 67 88 74 99 69 115 70 127 51 139 66 151 70 165 64 178 68 196 34 202 66 214 71 228 69 240 76 251 66 264 69 277 63 287 46 298 62 310 70 323 66 335 55 347 58 360 55V96H0Z"/><path class="sp-chart-line" d="M0 68 13 70 23 64 34 68 48 18 55 62 68 70 79 67 88 74 99 69 115 70 127 51 139 66 151 70 165 64 178 68 196 34 202 66 214 71 228 69 240 76 251 66 264 69 277 63 287 46 298 62 310 70 323 66 335 55 347 58 360 55"/></svg><div class="sp-chart-times"><span>14:00</span><span>14:30</span><span>15:00</span></div>`, 'sp-latency'));
   const secrets = tile('Secret actions', surface(`${button('Create Secret','secret',{before:i('plus',16)})}${button('Creating…',null,{before:'<span class="sp-spinner"></span>',attrs:'disabled aria-busy="true"'})}${button('Delete Secret','delete-secret',{variant:'danger',before:i('trash',16)})}`, 'sp-secrets'));
   const evaluations = tile('Evaluations', surface(`<header class="sp-row"><strong>Evals</strong>${button('','add-eval',{variant:'secondary',className:'sp-square',before:i('plus'),attrs:'aria-label="Add evaluation"'})}</header><div class="sp-eval-list">${[['Cost','cost'],['Latency','latency'],['Answer Helpfulness','helpfulness']].map(([title,key])=>`<button type="button" class="sp-eval-row p-button" data-special-action="evaluation" aria-pressed="false">${i(key === 'cost' ? 'chart' : key === 'latency' ? 'clock' : 'sliders',16)}<span>${title}<small>${key}</small></span>${i('chevronDown',16)}</button>`).join('')}</div>`, 'sp-evals'));
-  const model = tile('Model settings', surface(`<div class="sp-row"><strong>${i('sparkles',20)}GPT-6</strong>${i('chevronDown',16)}</div><div class="sp-model-setting"><label for="special-model-length">Max Length</label><span class="sp-number p-number-field"><button type="button" data-special-action="model-down" aria-label="Decrease maximum length">${i('minus')}</button><input id="special-model-length" type="number" min="1" max="4096" step="64" value="256"><button type="button" data-special-action="model-up" aria-label="Increase maximum length">${i('plus')}</button></span></div>`, 'sp-model'));
+  const model = tile('Model settings', surface(`<div class="sp-row"><strong>${i('sparkles',20)}GPT-6</strong>${i('chevronDown',16)}</div><div class="sp-model-setting"><label for="special-model-length">Max Length</label><output for="special-model-length" data-model-length>256</output><input id="special-model-length" type="range" min="0" max="512" step="1" value="256" aria-label="Maximum length in tokens"></div>`, 'sp-model'));
   const logs = [['14:50:22','Building image im-prreydvahzckzbst'],['14:50:45','Creating image snapshot...'],['14:52:07','Finished snapshot; took 357.4512ms']];
   const build = tile('Build log', surface(`<div class="sp-build-lines">${logs.map(([time,message])=>`<div><time>Feb 19 ${time}</time><p>${message}</p></div>`).join('')}</div><span class="sp-listening"><i></i><span data-pipeline-state>Listening</span></span>`, 'sp-build'));
-  return columns([pipeline,latency,palette(),secrets],[evaluations,typography(theme),model,build],'canvas');
+  return columns([pipeline,latency,palette(),secrets],[evaluations,typography(theme),model,build],'canvas').replace('class="special-overview sp-canvas"', `class="special-overview sp-canvas" data-sp-mode="${theme.mode}"`);
 }
 
 function alloy(theme) {
@@ -70,7 +70,7 @@ export function renderSpecialOverview(theme) {
 export function bindSpecialOverview(container, { notify = () => {} } = {}) {
   const overview = container.querySelector('.special-overview');
   if (!overview) return;
-  const preview = overview.closest('.preview');
+  const preview = container.matches?.('.preview') ? container : overview.closest('.preview');
   if (preview && typeof MutationObserver !== 'undefined') {
     const syncFamily = () => {
       const family = getComputedStyle(preview).getPropertyValue('--font-brand').split(',')[0].replace(/["']/g, '').trim();
@@ -85,14 +85,14 @@ export function bindSpecialOverview(container, { notify = () => {} } = {}) {
   }
   const setLabel = (button, text) => { const label = button.querySelector(':scope > span:last-of-type'); if (label) label.textContent = text; };
   const syncBag = () => { const input = overview.querySelector('#special-bag-quantity'); if (!input) return; input.value = Math.max(1, Math.min(99, Number(input.value) || 1)); overview.querySelectorAll('[data-bag-total]').forEach(el => { el.textContent = `$${(Number(input.value) * 84).toFixed(2)}`; }); };
-  overview.addEventListener('input', e => { if (e.target.id === 'special-bag-quantity') syncBag(); });
+  overview.addEventListener('input', e => { if (e.target.id === 'special-bag-quantity') syncBag(); if(e.target.id === 'special-model-length'){ overview.querySelector('[data-model-length]').textContent=e.target.value; e.target.parentElement.style.setProperty('--model-fill', `${Number(e.target.value)/512*100}%`); } });
   overview.addEventListener('click', e => {
     const target = e.target.closest('[data-special-action]'); if (!target) return;
     const action = target.dataset.specialAction;
     if (action === 'reaction') { const active = target.getAttribute('aria-pressed') === 'true'; const count = target.querySelector(':scope > span:last-of-type'); count.textContent = Number(count.textContent) + (active ? -1 : 1); target.setAttribute('aria-pressed', String(!active)); }
     else if (action === 'join') { const active = target.getAttribute('aria-pressed') === 'true'; target.setAttribute('aria-pressed', String(!active)); setLabel(target, active ? 'Join' : 'Joined'); overview.querySelector('[data-attendee-count]').textContent = active ? '8' : '9'; }
     else if (action === 'wave') { setLabel(target,'Waved!'); target.classList.add('sp-waved'); }
-    else if (action === 'invite') { setLabel(target,'Invited'); notify('Invitation preview sent to your circle.'); }
+    else if (action === 'invite') { setLabel(target,'Invite ready'); notify('Your circle invitation is ready in this preview.'); }
     else if (action === 'add-reaction') { const reaction = document.createElement('button'); reaction.type='button'; reaction.className='sp-button p-button sp-small'; reaction.dataset.spVariant='ghost'; reaction.dataset.specialAction='reaction'; reaction.setAttribute('aria-pressed','true'); reaction.innerHTML='<span>😊</span><span>1</span>'; target.before(reaction); target.disabled=true; }
     else if (action === 'brief') { const panel=target.closest('footer').querySelector('.sp-brief-panel'); panel.hidden=!panel.hidden; target.setAttribute('aria-expanded',String(!panel.hidden)); setLabel(target,panel.hidden?'Read brief':'Close brief'); }
     else if (action === 'review') { overview.querySelectorAll('.sp-review-list .sp-pending').forEach(el=>{el.classList.remove('sp-pending');el.textContent='Reviewed';});setLabel(target,'Review complete'); }
